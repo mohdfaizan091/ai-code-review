@@ -58,3 +58,10 @@ export const login = async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 };
+
+export const getMe = (req, res) => {
+    return res.status(200).json({
+        success: true,
+        user: req.user
+    });
+};
