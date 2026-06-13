@@ -2,6 +2,7 @@ import express from "express";
 import userRoutes from "./src/routes/userRoutes.js";
 import connectDB from "./src/config/db.js";
 import authRoutes from "./src/routes/authRoutes.js";
+import reviewRoutes from "./src/routes/reviewRoutes.js";
 import cookieParser from "cookie-parser";
 
 
@@ -18,6 +19,7 @@ app.use(cookieParser());
 //Routes
 app.use("/v1/api/users", userRoutes);
 app.use("/v1/api/auth", authRoutes);
+app.use("/v1/api/review", reviewRoutes);
 
 
 //PORT
