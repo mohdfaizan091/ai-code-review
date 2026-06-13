@@ -1,15 +1,7 @@
-import { useEffect } from 'react'
-import { testConnection } from './services/reviewService'
+import HomePage from './pages/HomePage'
 
 function App() {
-  useEffect(() => {
-    testConnection();
-  }, [])
-
-  return (
-    <div className="bg-blue-500 text-white p-4">
-      Tailwind is working!
-    </div>
-  )
+  return <HomePage />
 }
+
 export default App;
