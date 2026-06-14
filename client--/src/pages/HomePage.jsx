@@ -7,25 +7,34 @@ import { streamReview } from '../services/reviewService';
 const HomePage = () => {
   const [code, setCode] = useState('// write your code here');
   const [language, setLanguage] = useState('javascript');
-  const [review, setReview] = useState('');
+  const [streamingText, setStreamingText] = useState('');
+  const [parsedReview, setParsedReview] = useState(null);
   const [isStreaming, setIsStreaming] = useState(false);
 
   const handleReview = async () => {
-    setReview('');
+    setStreamingText('');
+    setParsedReview(null);
     setIsStreaming(true);
 
     await streamReview(
       code,
       language,
-      (token) => setReview(prev => prev + token),
-      () => setIsStreaming(false)
+      (token) => setStreamingText(prev => prev + token),
+      (fullText) => {
+        try {
+          const clean = fullText.replace(/```json|```/g, "").trim();
+          const parsed = JSON.parse(clean);
+          setParsedReview(parsed);
+        } catch (e) {
+          console.error("Parse failed:", e);
+        }
+        setIsStreaming(false);
+      }
     );
   };
 
   return (
     <div className="h-screen bg-gray-900 text-white flex flex-col">
-      
-      {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-gray-700">
         <h1 className="text-xl font-semibold">AI Code Review</h1>
         <div className="flex items-center gap-4">
@@ -40,20 +49,18 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Main — Editor + Review Panel */}
       <div className="flex-1 flex gap-4 p-4 overflow-hidden">
         <div className="flex-1">
-          <CodeEditor
-            code={code}
-            onChange={setCode}
-            language={language}
-          />
+          <CodeEditor code={code} onChange={setCode} language={language} />
         </div>
         <div className="flex-1">
-          <ReviewPanel review={review} isStreaming={isStreaming} />
+          <ReviewPanel
+            streamingText={streamingText}
+            parsedReview={parsedReview}
+            isStreaming={isStreaming}
+          />
         </div>
       </div>
-
     </div>
   );
 };

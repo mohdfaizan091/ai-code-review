@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import envConfig from "../config/envConfig.js";
+
 export const authMiddleware = (req, res, next) => {
     try {
         // get the token
