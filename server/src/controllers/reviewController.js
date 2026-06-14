@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { generateReview } from "../services/reviewService.js";
+import { streamReview } from "../services/reviewService.js";
 
 const reviewSchema = z.object({
     code: z.string().min(1, "Code cannot be empty"),
@@ -11,9 +11,13 @@ export const createReview = async (req, res) => {
         const { code, language } = reviewSchema.parse(req.body);
         const userId = req.user.userId;
 
-        const review = await generateReview(code, language);
+        // SSE headers
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
 
-        res.status(200).json({ success: true, review });
+        // stream shuru karo
+        await streamReview(code, language, res);
 
     } catch (error) {
         res.status(400).json({ message: error.message });

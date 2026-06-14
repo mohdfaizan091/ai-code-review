@@ -21,7 +21,7 @@ ${code}
 \`\`\``;
 };
 
-export const generateReview = async (code, language) => {
+export const streamReview = async (code, language, res) => {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -30,6 +30,7 @@ export const generateReview = async (code, language) => {
         },
         body: JSON.stringify({
             model: "llama-3.1-8b-instant",
+            stream: true,
             messages: [
                 {
                     role: "user",
@@ -39,11 +40,33 @@ export const generateReview = async (code, language) => {
         }),
     });
 
-    const data = await response.json();
-    const rawText = data.choices[0].message.content;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
 
-    const clean = rawText.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(clean);
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-    return parsed;
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n").filter(line => line.startsWith("data: "));
+
+        for (const line of lines) {
+            const data = line.replace("data: ", "");
+            if (data === "[DONE]") {
+                res.write("data: [DONE]\n\n");
+                res.end();
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(data);
+                const token = parsed.choices[0]?.delta?.content;
+                if (token) {
+                    res.write(`data: ${JSON.stringify({ token })}\n\n`);
+                }
+            } catch (e) {
+                // skip malformed chunks
+            }
+        }
+    }
 };
