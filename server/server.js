@@ -4,6 +4,7 @@ import connectDB from "./src/config/db.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import reviewRoutes from "./src/routes/reviewRoutes.js";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 
 //DATABASE CONNECTION 
@@ -14,6 +15,10 @@ const app = express();
 //Middleware
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+}));
 
 
 //Routes
