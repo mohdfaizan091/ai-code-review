@@ -1,4 +1,5 @@
 import envConfig from "../config/envConfig.js";
+import Review from "../models/Review.js";
 
 const buildPrompt = (code, language) => {
     return `You are an expert code reviewer. Review the following ${language} code and respond ONLY with a JSON object — no markdown, no explanation, just raw JSON.
@@ -21,7 +22,7 @@ ${code}
 \`\`\``;
 };
 
-export const streamReview = async (code, language, res) => {
+export const streamReview = async (code, language, userId, res) => {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -42,6 +43,7 @@ export const streamReview = async (code, language, res) => {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    let fullResponse = "";
 
     while (true) {
         const { done, value } = await reader.read();
@@ -53,6 +55,21 @@ export const streamReview = async (code, language, res) => {
         for (const line of lines) {
             const data = line.replace("data: ", "");
             if (data === "[DONE]") {
+                // stream complete — save to DB
+                try {
+                    const clean = fullResponse.replace(/```json|```/g, "").trim();
+                    const parsed = JSON.parse(clean);
+
+                    await Review.create({
+                        userId,
+                        code,
+                        language,
+                        feedback: parsed,
+                    });
+                } catch (e) {
+                    console.error("Failed to save review:", e.message);
+                }
+
                 res.write("data: [DONE]\n\n");
                 res.end();
                 return;
@@ -62,6 +79,7 @@ export const streamReview = async (code, language, res) => {
                 const parsed = JSON.parse(data);
                 const token = parsed.choices[0]?.delta?.content;
                 if (token) {
+                    fullResponse += token;
                     res.write(`data: ${JSON.stringify({ token })}\n\n`);
                 }
             } catch (e) {
