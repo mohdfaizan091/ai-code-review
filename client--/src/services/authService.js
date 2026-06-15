@@ -1,5 +1,7 @@
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 export const login = async (email, password) => {
-    const response = await fetch('/v1/api/auth/login', {
+  const response = await fetch(`${API_URL}/v1/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -9,7 +11,7 @@ export const login = async (email, password) => {
   };
   
   export const register = async (name, email, password) => {
-    const response = await fetch('/v1/api/auth/register', {
+    const response = await fetch(`${API_URL}/v1/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password }),
@@ -19,14 +21,14 @@ export const login = async (email, password) => {
   };
   
   export const getMe = async () => {
-    const response = await fetch('/v1/api/auth/me', {
+    const response = await fetch(`${API_URL}/v1/api/auth/me`, {
       credentials: 'include',
     });
     return response.json();
   };
   
   export const logout = async () => {
-    const response = await fetch('/v1/api/auth/logout', {
+    const response = await fetch(`${API_URL}/v1/api/auth/logout`, {
       method: 'POST',
       credentials: 'include',
     });

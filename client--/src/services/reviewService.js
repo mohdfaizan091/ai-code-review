@@ -1,5 +1,7 @@
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 export const streamReview = async (code, language, onToken, onComplete) => {
-    const response = await fetch('/v1/api/review', {
+    const response = await fetch(`${API_URL}/v1/api/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, language }),
@@ -8,7 +10,7 @@ export const streamReview = async (code, language, onToken, onComplete) => {
   
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-    let fullText = '';  // yahan add karo
+    let fullText = ''; 
   
     while (true) {
         const { done, value } = await reader.read();
@@ -37,7 +39,7 @@ export const streamReview = async (code, language, onToken, onComplete) => {
   };
 
   export const getReviews = async () => {
-    const response = await fetch('/v1/api/review', {
+    const response = await fetch(`${API_URL}/v1/api/review`, {
       method: 'GET',
       credentials: 'include',
     });
