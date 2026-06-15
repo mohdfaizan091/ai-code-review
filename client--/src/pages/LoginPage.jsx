@@ -13,7 +13,7 @@ const LoginPage = () => {
     setLoading(true);
     setError('');
     const data = await login(email, password);
-    if (data.message === 'Login successful') {
+    if (data.ok) {
       navigate('/');
     } else {
       setError(data.message);
