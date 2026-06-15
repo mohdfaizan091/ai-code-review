@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CodeEditor from '../components/CodeEditor';
 import LanguageSelector from '../components/LanguageSelector';
 import ReviewPanel from '../components/ReviewPanel';
@@ -10,6 +11,8 @@ const HomePage = () => {
   const [streamingText, setStreamingText] = useState('');
   const [parsedReview, setParsedReview] = useState(null);
   const [isStreaming, setIsStreaming] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleReview = async () => {
     setStreamingText('');
@@ -37,8 +40,20 @@ const HomePage = () => {
     <div className="h-screen bg-gray-900 text-white flex flex-col">
       <div className="flex items-center justify-between px-6 py-3 border-b border-gray-700">
         <h1 className="text-xl font-semibold">AI Code Review</h1>
+
         <div className="flex items-center gap-4">
-          <LanguageSelector language={language} onChange={setLanguage} />
+          <button
+            onClick={() => navigate('/history')}
+            className="text-gray-400 hover:text-white text-sm"
+          >
+            History
+          </button>
+
+          <LanguageSelector
+            language={language}
+            onChange={setLanguage}
+          />
+
           <button
             onClick={handleReview}
             disabled={isStreaming}
@@ -51,8 +66,13 @@ const HomePage = () => {
 
       <div className="flex-1 flex gap-4 p-4 overflow-hidden">
         <div className="flex-1">
-          <CodeEditor code={code} onChange={setCode} language={language} />
+          <CodeEditor
+            code={code}
+            onChange={setCode}
+            language={language}
+          />
         </div>
+
         <div className="flex-1">
           <ReviewPanel
             streamingText={streamingText}

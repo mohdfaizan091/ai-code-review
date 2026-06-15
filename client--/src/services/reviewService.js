@@ -35,3 +35,12 @@ export const streamReview = async (code, language, onToken, onComplete) => {
         }
     }
   };
+
+  export const getReviews = async () => {
+    const response = await fetch('/v1/api/review', {
+      method: 'GET',
+      credentials: 'include',
+    });
+    const data = await response.json();
+    return data;
+  };
