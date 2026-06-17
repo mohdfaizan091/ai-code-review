@@ -1,26 +1,33 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate  } from 'react-router-dom';
 import { login } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
+  const { user, setUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  if (user) {
+    return <Navigate to="/" />;
+  }
+
   const handleLogin = async () => {
     setLoading(true);
     setError('');
     const data = await login(email, password);
+    console.log('LOGIN RESPONSE:', data); // add karo
     if (data.ok) {
+      setUser(data.user);
       navigate('/');
     } else {
       setError(data.message);
     }
     setLoading(false);
-  };
-
+};
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
       <div className="bg-gray-800 rounded-lg p-8 w-full max-w-md">
