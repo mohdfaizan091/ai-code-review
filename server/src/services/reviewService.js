@@ -16,6 +16,9 @@ The JSON must follow this exact structure:
   "summary": "<2-3 sentence plain text overview>"
 }
 
+Respond with ONLY valid, parseable JSON. Ensure all strings use double quotes and there are no trailing commas.
+
+
 Code to review:
 \`\`\`${language}
 ${code}

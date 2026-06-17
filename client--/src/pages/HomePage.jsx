@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CodeEditor from '../components/CodeEditor';
-import LanguageSelector from '../components/LanguageSelector';
 import ReviewPanel from '../components/ReviewPanel';
 import Navbar from '../components/Navbar';
 import { streamReview } from '../services/reviewService';
@@ -20,7 +19,7 @@ const HomePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // sessionStorage mein save karo jab bhi change ho
+  // sessionStorage save
   useEffect(() => {
     sessionStorage.setItem('code', code);
   }, [code]);
@@ -64,7 +63,7 @@ const HomePage = () => {
           console.error("Parse failed:", e);
         }
         setIsStreaming(false);
-      }
+      }      
     );
   };
 
