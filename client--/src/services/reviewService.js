@@ -22,13 +22,13 @@ export const streamReview = async (code, language, onToken, onComplete) => {
         for (const line of lines) {
             const data = line.replace('data: ', '');
             if (data === '[DONE]') {
-                onComplete(fullText);  // ab fullText available hai
+                onComplete(fullText);  
                 return;
             }
             try {
                 const parsed = JSON.parse(data);
                 if (parsed.token) {
-                    fullText += parsed.token;  // yahan bhi add karo
+                    fullText += parsed.token; 
                     onToken(parsed.token);
                 }
             } catch (e) {

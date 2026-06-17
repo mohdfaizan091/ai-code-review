@@ -18,7 +18,7 @@ export const createReview = async (req, res) => {
         res.setHeader("Cache-Control", "no-cache");
         res.setHeader("Connection", "keep-alive");
 
-        // stream shuru karo
+        //  SSE stream 
         await streamReview(code, language, userId, res);
 
     } catch (error) {

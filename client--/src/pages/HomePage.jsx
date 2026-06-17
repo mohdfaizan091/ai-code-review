@@ -19,7 +19,7 @@ const HomePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // sessionStorage save
+  // sessionStorage 
   useEffect(() => {
     sessionStorage.setItem('code', code);
   }, [code]);
