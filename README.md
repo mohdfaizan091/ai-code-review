@@ -1,0 +1,130 @@
+# AI Code Review Tool
+
+A full-stack web application that provides instant, AI-powered code reviews using real-time streaming. Paste your code, get structured feedback on issues, suggestions, and an overall quality score — streamed live as the AI analyzes it.
+
+**Live Demo:** [ai-code-review-olive.vercel.app](https://ai-code-review-olive.vercel.app)
+
+---
+
+## Features
+
+- **Live AI Code Review** — Get instant feedback streamed token-by-token using Server-Sent Events (SSE), just like ChatGPT
+- **Structured Feedback** — Issues categorized by severity (high/medium/low), actionable suggestions with code fixes, and an overall quality score
+- **Monaco Editor Integration** — The same code editor that powers VS Code, with syntax highlighting for multiple languages
+- **Guest Mode** — Try the editor without an account; sign up only when you're ready to review
+- **Secure Authentication** — JWT-based auth with HttpOnly cookies, protected against XSS and CSRF
+- **Review History** — All past reviews are saved and accessible with pagination
+- **Multi-language Support** — JavaScript, TypeScript, Python, Java, C++
+
+---
+
+## Tech Stack
+
+**Frontend**
+- React + Vite
+- Tailwind CSS
+- Monaco Editor
+- React Router
+
+**Backend**
+- Node.js + Express
+- MongoDB Atlas + Mongoose
+- JWT Authentication (HttpOnly Cookies)
+- Zod (request & environment validation)
+- Server-Sent Events (SSE) for streaming
+
+**AI**
+- Groq API (`llama-3.1-8b-instant`) for fast, low-latency code analysis
+
+**Deployment**
+- Frontend: Vercel
+- Backend: Render
+
+---
+
+## Architecture
+
+The backend follows a clean **Route → Controller → Service** pattern, separating concerns:
+
+- **Routes** — define endpoints and apply middleware
+- **Controllers** — handle request/response, validate input
+- **Services** — contain business logic (AI calls, database operations)
+
+This separation made it possible to switch AI providers (initially planned for Anthropic/Gemini, settled on Groq for reliable free-tier access) by changing a single file, without touching routes or controllers.
+
+---
+
+## Screenshots
+
+### Code Review with Live Streaming
+![Code Review](./screenshots/review-panel.png)
+
+### Sign In
+![Login Page](./screenshots/login.png)
+
+### Review History
+![History Page](./screenshots/history.png)
+
+---
+
+## Key Technical Decisions
+
+- **SSE over WebSockets** — Reviews are one-directional (server → client), making SSE simpler and sufficient compared to WebSockets' bidirectional overhead.
+- **HttpOnly Cookies over localStorage** — JWT stored in HttpOnly cookies to prevent XSS attacks from accessing the token via JavaScript.
+- **Cross-origin cookie handling** — Configured `sameSite: "none"` and `secure: true` for cookies to work correctly across Vercel (frontend) and Render (backend) domains.
+- **Buffer-based SSE parsing** — Network chunks don't always align with message boundaries; implemented buffering on the frontend to handle partial JSON chunks reliably.
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- MongoDB Atlas account
+- Groq API key ([console.groq.com](https://console.groq.com))
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/mohdfaizan091/ai-code-review.git
+cd ai-code-review
+
+# Backend setup
+cd server
+npm install
+```
+
+Create a `.env` file in `server/`:
+```
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+GROQ_API_KEY=your_groq_api_key
+PORT=3000
+```
+
+```bash
+npm run dev
+```
+
+```bash
+# Frontend setup (new terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## Author
+
+**Mohd Faizan**
+B.Tech CSE, Axis Institute of Technology and Management (AKTU Lucknow)
+
+[GitHub](https://github.com/mohdfaizan091) • [LinkedIn](https://www.linkedin.com/in/mohd-faizan-27270732a/)
+
+---
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE).
