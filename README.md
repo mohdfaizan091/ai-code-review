@@ -50,7 +50,9 @@ The backend follows a clean **Route → Controller → Service** pattern, separa
 - **Controllers** — handle request/response, validate input
 - **Services** — contain business logic (AI calls, database operations)
 
-This separation made it possible to switch AI providers (initially planned for Anthropic/Gemini, settled on Groq for reliable free-tier access) by changing a single file, without touching routes or controllers.
+## AI Provider Abstraction:
+
+ The review pipeline uses a generator-based streaming interface (streamCompletion(prompt)) that decouples the orchestration logic (reviewService.js) from provider-specific implementation details (providers/groqProvider.js). Adding support for a new LLM provider (e.g., OpenAI, Anthropic) requires implementing the same async generator interface in a new provider file and updating a single import — the orchestration, SSE streaming, and DB-persistence logic remain untouched.
 
 ---
 
