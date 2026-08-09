@@ -35,6 +35,9 @@ A full-stack web application that provides instant, AI-powered code reviews usin
 
 **AI**
 - Groq API (`llama-3.1-8b-instant`) for fast, low-latency code analysis
+- Zod schema validation on AI responses (not just JSON parsing, but structural validation) to catch malformed LLM output before persisting
+- Few-shot prompting — a worked example included in the prompt alongside instructions, for consistent output formatting
+- Temperature-tuned prompting (`temperature: 0.2`) for consistent, analytical output over creative variance
 
 **Deployment**
 - Frontend: Vercel
@@ -50,9 +53,9 @@ The backend follows a clean **Route → Controller → Service** pattern, separa
 - **Controllers** — handle request/response, validate input
 - **Services** — contain business logic (AI calls, database operations)
 
-## AI Provider Abstraction:
+## AI Provider Abstraction
 
- The review pipeline uses a generator-based streaming interface (streamCompletion(prompt)) that decouples the orchestration logic (reviewService.js) from provider-specific implementation details (providers/groqProvider.js). Adding support for a new LLM provider (e.g., OpenAI, Anthropic) requires implementing the same async generator interface in a new provider file and updating a single import — the orchestration, SSE streaming, and DB-persistence logic remain untouched.
+The review pipeline uses a generator-based streaming interface (`streamCompletion(prompt)`) that decouples the orchestration logic (`reviewService.js`) from provider-specific implementation details (`providers/groqProvider.js`). Adding support for a new LLM provider (e.g., OpenAI, Anthropic) requires implementing the same async generator interface in a new provider file and updating a single import — the orchestration, SSE streaming, and DB-persistence logic remain untouched.
 
 ---
 
@@ -74,7 +77,10 @@ The backend follows a clean **Route → Controller → Service** pattern, separa
 - **SSE over WebSockets** — Reviews are one-directional (server → client), making SSE simpler and sufficient compared to WebSockets' bidirectional overhead.
 - **HttpOnly Cookies over localStorage** — JWT stored in HttpOnly cookies to prevent XSS attacks from accessing the token via JavaScript.
 - **Cross-origin cookie handling** — Configured `sameSite: "none"` and `secure: true` for cookies to work correctly across Vercel (frontend) and Render (backend) domains.
-- **Buffer-based SSE parsing** — Network chunks don't always align with message boundaries; implemented buffering on the frontend to handle partial JSON chunks reliably.
+- **Buffer-based SSE parsing** — Network chunks don't always align with message boundaries; implemented buffering (both client and server side) with a persistent buffer to handle partial JSON chunks reliably without data loss.
+- **Structured output validation** — LLM responses are validated against a Zod schema (not just `JSON.parse`) before being persisted, since valid JSON syntax doesn't guarantee the expected shape. Malformed responses surface as an explicit SSE error event to the client rather than failing silently.
+- **Few-shot prompting** — The review prompt includes a worked example (input code + expected output) alongside instructions, improving output format consistency over a zero-shot approach.
+- **Temperature control** — Set to `0.2` rather than the API default, since code review is an analytical task requiring consistency over creative variance. Some inherent variance in subjective scoring remains, which is treated as an expected trade-off rather than a bug.
 
 ---
 
