@@ -67,7 +67,7 @@ The review pipeline uses a generator-based streaming interface (`streamCompletio
 ### Sign In
 ![Login Page](./screenshots/login.png)
 
-### Review History
+### Home Page
 ![History Page](./screenshots/history.png)
 
 ---
