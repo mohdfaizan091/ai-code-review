@@ -8,21 +8,17 @@ export async function* streamCompletion(prompt) {
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            model: "llama-3.1-8b-instant",
+            model: "openai/gpt-oss-20b",
             stream: true,
             temperature: 0.2,
-            messages: [
-                {
-                    role: "user",
-                    content: prompt,
-                },
-            ],
+            max_tokens: 4096,
+            messages: [ { role: "user", content: prompt } ],
         }),
     });
 
     if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+        const errorText = await response.text();
+        throw new Error(`Groq API error: ${response.status} - ${errorText}`);
     }
 
     if (!response.body) {
@@ -31,58 +27,54 @@ export async function* streamCompletion(prompt) {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-
     let buffer = "";
 
     while (true) {
         const { done, value } = await reader.read();
-
         if (done) {
             buffer += decoder.decode();
             break;
         }
 
         buffer += decoder.decode(value, { stream: true });
-
         const lines = buffer.split("\n");
         buffer = lines.pop() || "";
 
         for (const line of lines) {
             if (!line.startsWith("data: ")) continue;
-
             const data = line.slice(6).trim();
-
-            if (data === "[DONE]") {
-                return;
-            }
+            if (data === "[DONE]") return;
 
             try {
                 const parsed = JSON.parse(data);
-                const token = parsed.choices?.[0]?.delta?.content;
+                if (parsed.error) {
+                    throw new Error(`Groq API stream error: ${parsed.error.message || JSON.stringify(parsed.error)}`);
+                }
 
+                const token = parsed.choices?.[0]?.delta?.content;
                 if (token) {
                     yield token;
                 }
             } catch (err) {
-                console.error("Chunk parse error:", err.message);
+                if (err.message.startsWith("Groq API stream error")) {
+                    throw err;
+                }
             }
         }
     }
 
-    // Process any remaining buffered line
     if (buffer.trim().startsWith("data: ")) {
         const data = buffer.trim().slice(6).trim();
-
         if (data !== "[DONE]") {
             try {
                 const parsed = JSON.parse(data);
-                const token = parsed.choices?.[0]?.delta?.content;
-
-                if (token) {
-                    yield token;
+                if (parsed.error) {
+                    throw new Error(`Groq API stream error: ${parsed.error.message || JSON.stringify(parsed.error)}`);
                 }
+                const token = parsed.choices?.[0]?.delta?.content;
+                if (token) yield token;
             } catch (err) {
-                console.error("Final chunk parse error:", err.message);
+                if (err.message.startsWith("Groq API stream error")) throw err;
             }
         }
     }

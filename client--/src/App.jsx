@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import LandingPage from './pages/LandingPage'
 import HomePage from './pages/HomePage'
 import HistoryPage from './pages/HistoryPage'
 import LoginPage from './pages/LoginPage'
@@ -10,7 +11,8 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/editor" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/history" element={

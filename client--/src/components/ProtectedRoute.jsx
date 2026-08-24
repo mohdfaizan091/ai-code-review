@@ -19,8 +19,8 @@ const ProtectedRoute = ({ children }) => {
 
   if (isAuthenticated === null) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-gray-400">Loading...</div>
+      <div className="min-h-screen bg-[#10131A] flex items-center justify-center">
+        <div className="text-[#8B92A5]">Loading...</div>
       </div>
     );
   }
