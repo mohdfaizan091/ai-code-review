@@ -248,11 +248,11 @@ const LandingPage = () => {
       {/* FOOTER */}
       <footer className="border-t border-[#20242F] py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row gap-4 items-center justify-between">
-          <p className="text-xs text-[#5B6274]">© 2026 codereview.ai — built by Mohd Faizan</p>
+          <p className="text-xs text-[#5B6274]">© 2026 Ai-Code-Review — built by Mohd Faizan</p>
           <div className="flex gap-6 text-xs text-[#8B92A5]">
             <a href="https://github.com/mohdfaizan091/ai-code-review" target="_blank" rel="noreferrer" className="hover:text-white transition">GitHub</a>
             <a href="https://www.linkedin.com/in/mohd-faizan-27270732a/" target="_blank" rel="noreferrer" className="hover:text-white transition">LinkedIn</a>
-            <a href="https://ai-code-review-olive.vercel.app" target="_blank" rel="noreferrer" className="hover:text-white transition">Live demo</a>
+            
           </div>
         </div>
       </footer>
