@@ -26,6 +26,12 @@ app.use("/v1/api/users", userRoutes);
 app.use("/v1/api/auth", authRoutes);
 app.use("/v1/api/review", reviewRoutes);
 
+app.use('/webhook/github', express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf; 
+  }
+}));
+
 
 //PORT
 const PORT = process.env.PORT || 3000;
