@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { getPRFiles } from '../services/githubService.js';
+import { reviewPRDiff } from '../services/prReviewService.js';
 
 function verifySignature(req) {
   const signature = req.headers['x-hub-signature-256'];
@@ -20,7 +21,6 @@ export const handleGithubWebhook = async (req, res) => {
   const event = req.headers['x-github-event'];
   const { action, pull_request, repository } = req.body;
 
-  // Turant 200 bhejo — GitHub ko wait mat karwao heavy processing ke liye
   res.status(200).send('OK');
 
   if (event === 'pull_request' && ['opened', 'synchronize'].includes(action)) {
@@ -30,10 +30,11 @@ export const handleGithubWebhook = async (req, res) => {
         repository.name,
         pull_request.number
       );
-      console.log('Changed files:', files.map(f => ({ filename: f.filename, patch: f.patch?.slice(0, 100) })));
-      // Checkpoint 3 mein yaha Groq ko bhejenge
+      const review = await reviewPRDiff(files);
+      console.log('AI Review result:', JSON.stringify(review, null, 2));
+      // Checkpoint 4 mein yaha GitHub pe post karenge
     } catch (err) {
-      console.error('Failed to fetch PR files:', err.message);
+      console.error('Failed to review PR:', err.message);
     }
   }
 };

@@ -2,6 +2,7 @@ import { streamCompletion } from "../providers/groqProvider.js";
 import Review from "../models/Review.js";
 import { z } from "zod";
 import { jsonrepair } from "jsonrepair";
+import { extractAndParseJSON } from "../utils/aiResponseParser.js";
 
 const reviewResponseSchema = z.object({
   issues: z.array(z.object({
@@ -17,19 +18,6 @@ const reviewResponseSchema = z.object({
   summary: z.string(),
 });
 
-function extractAndParseJSON(text) {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}') + 1;
-  if (start === -1 || end === 0) throw new Error('No JSON object found');
-  let candidate = text.substring(start, end);
-  candidate = candidate.replace(/```json|```/g, '').trim();
-  try {
-    const repaired = jsonrepair(candidate);
-    return JSON.parse(repaired);
-  } catch {
-    return JSON.parse(candidate);
-  }
-}
 
 function normalizeReviewData(data) {
   if (Array.isArray(data.issues) && data.issues.length > 0 && typeof data.issues[0] === 'string') {
