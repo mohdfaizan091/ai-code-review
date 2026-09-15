@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 function verifySignature(req) {
   const signature = req.headers['x-hub-signature-256'];
@@ -8,12 +8,10 @@ function verifySignature(req) {
     .createHmac('sha256', process.env.GITHUB_WEBHOOK_SECRET)
     .update(req.rawBody)
     .digest('hex');
-
-  // timingSafeEqual zaroori hai — normal === se timing attack possible hai
   return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
 }
 
-exports.handleGithubWebhook = (req, res) => {
+export const handleGithubWebhook = (req, res) => {
   if (!verifySignature(req)) {
     return res.status(401).json({ error: 'Invalid signature' });
   }
@@ -28,8 +26,7 @@ exports.handleGithubWebhook = (req, res) => {
       pull_number: pull_request.number,
       sha: pull_request.head.sha
     });
-    // Checkpoint 2 mein yaha diff fetch karenge
   }
 
-  res.status(200).send('OK'); // GitHub ko turant 200 bhejo, warna retry karega
+  res.status(200).send('OK');
 };
