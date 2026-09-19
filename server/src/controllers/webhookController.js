@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { getPRFiles } from '../services/githubService.js';
+import { getPRFiles, postPRReview } from '../services/githubService.js';
 import { reviewPRDiff } from '../services/prReviewService.js';
 
 function verifySignature(req) {
@@ -31,10 +31,21 @@ export const handleGithubWebhook = async (req, res) => {
         pull_request.number
       );
       const review = await reviewPRDiff(files);
-      console.log('AI Review result:', JSON.stringify(review, null, 2));
-      // Checkpoint 4 mein yaha GitHub pe post karenge
+
+      if (review.files.some(f => f.issues.length > 0)) {
+        await postPRReview(
+          repository.owner.login,
+          repository.name,
+          pull_request.number,
+          pull_request.head.sha,
+          review
+        );
+        console.log('Review posted to PR');
+      } else {
+        console.log('No issues found, skipping comment post');
+      }
     } catch (err) {
-      console.error('Failed to review PR:', err.message);
+      console.error('Failed to review/post PR:', err.message);
     }
   }
 };
