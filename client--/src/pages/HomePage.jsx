@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import CodeEditor from '../components/CodeEditor';
 import ReviewPanel from '../components/ReviewPanel';
 import Navbar from '../components/Navbar';
 import { streamReview } from '../services/reviewService';
-import { useAuth } from '../context/AuthContext';
 import { jsonrepair } from 'jsonrepair';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const EXT = { javascript: 'js', typescript: 'ts', python: 'py', java: 'java', cpp: 'cpp' };
 
@@ -38,7 +38,9 @@ const HomePage = () => {
     return saved ? JSON.parse(saved) : null;
   });
   const [isStreaming, setIsStreaming] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+  const editorRef = useRef(null);
+  const [expandedPane, setExpandedPane] = useState(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -87,18 +89,27 @@ const HomePage = () => {
     }
   }, [parsedReview]);
 
+  useEffect(() => {
+    if (!expandedPane) return undefined;
+    const closeOnEscape = (event) => event.key === 'Escape' && setExpandedPane(null);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [expandedPane]);
+
   const handleReview = async () => {
     if (!user) {
-      setShowPopup(true);
+      navigate('/login');
       return;
     }
-    if (!code.trim()) {
-      alert('Please paste your code first!');
+
+    if (isStreaming || !code.trim()) {
+      if (!code.trim()) setReviewError('Paste some code before starting a review.');
       return;
     }
 
     setStreamingText('');
     setParsedReview(null);
+    setReviewError('');
     sessionStorage.removeItem('parsedReview');
     setIsStreaming(true);
 
@@ -114,56 +125,59 @@ const HomePage = () => {
           } catch (e) {
             console.error('Parse failed:', e.message);
             console.error('Raw response:', fullText);
-            alert('The AI response could not be understood. Please try again.');
+            setReviewError('The response could not be understood. Try the review again.');
           }
           setIsStreaming(false);
         },
         (message) => {
           setIsStreaming(false);
-          setStreamingText((prev) => prev || message);
-          alert(message);
+          setStreamingText((prev) => prev || 'The stream stopped before completing.');
+          setReviewError(message || 'The stream stopped before completing.');
         }
       );
     } catch (error) {
       // Catch network or other unexpected errors from streamReview
       console.error('Review failed:', error);
       setIsStreaming(false);
-      alert('An unexpected error occurred. Please try again.');
+      setReviewError('An unexpected error occurred. Please try again.');
     }
   };
 
   return (
-    <div className="h-screen bg-[#10131A] text-[#E7E9EE] flex flex-col">
+    <div className="min-h-screen bg-[#08111F] text-[#E5EDF9] flex flex-col">
       <Navbar />
-      <div className="h-px bg-gradient-to-r from-transparent via-[#E3B341]/25 to-transparent" />
+      <div className="h-px bg-gradient-to-r from-transparent via-[#38BDF8]/35 to-transparent" />
 
       <div
         ref={containerRef}
-        className="flex-1 flex p-5 overflow-hidden"
+        className="review-workspace flex-1 grid p-4 md:p-5 overflow-hidden"
         style={{ userSelect: isDragging ? 'none' : 'auto' }}
       >
         {/* Editor card */}
         <div
-          className="min-w-0 flex flex-col bg-[#171B24] border border-[#2A2F3D] rounded-2xl shadow-2xl shadow-black/30 overflow-hidden"
-          style={{ width: `calc(${editorWidth}% - 10px)` }}
+          className={`editor-card min-w-0 flex flex-col card overflow-hidden ${expandedPane === 'editor' ? 'pane-expanded' : ''}`}
+          style={{ '--editor-width': `${editorWidth}%` }}
         >
           {/* Tab strip */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#20242F]">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#E2685E]"></span>
-              <span className="w-2.5 h-2.5 rounded-full bg-[#E3B341]"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#F97316]"></span>
               <span className="w-2.5 h-2.5 rounded-full bg-[#5FBD8A]"></span>
               <span className="ml-2 text-xs font-mono text-[#8B92A5]">review.{EXT[language]}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-[#5B6274]">
-              <span className={`w-1.5 h-1.5 rounded-full ${isStreaming ? 'bg-[#E3B341] animate-pulse' : 'bg-[#5FBD8A]'}`}></span>
-              {isStreaming ? 'Analyzing' : 'Ready'}
+            <div className="flex items-center gap-2 text-xs text-[#5B6274]">
+              <span className={`w-1.5 h-1.5 rounded-full ${isStreaming ? 'bg-[#38BDF8] animate-pulse' : 'bg-[#5FBD8A]'}`}></span>
+              <span className="hidden sm:inline">{isStreaming ? 'Analyzing' : 'Ready'}</span>
+              <button className="pane-toggle" onClick={() => setExpandedPane(expandedPane === 'editor' ? null : 'editor')} aria-label={expandedPane === 'editor' ? 'Exit expanded code editor' : 'Expand code editor'} title={expandedPane === 'editor' ? 'Exit fullscreen (Esc)' : 'Expand editor'}>
+                {expandedPane === 'editor' ? '×' : '⛶'}
+              </button>
             </div>
           </div>
 
           {/* Editor */}
           <div className="flex-1 overflow-hidden">
-            <CodeEditor code={code} onChange={setCode} language={language} />
+            <CodeEditor ref={editorRef} code={code} onChange={setCode} language={language} onSubmit={handleReview} />
           </div>
 
           {/* Controls */}
@@ -186,77 +200,36 @@ const HomePage = () => {
             <button
               onClick={handleReview}
               disabled={isStreaming}
-              className="flex items-center gap-2 bg-[#E3B341] hover:bg-[#EEC565]
-                        disabled:opacity-50 disabled:hover:bg-[#E3B341] text-[#1B1500] px-5 py-2
-                        rounded-lg text-sm font-medium shadow-lg shadow-[#E3B341]/10
-                        hover:shadow-[#E3B341]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="button button-primary"
             >
-              <span>✨</span>
-              {isStreaming ? "Reviewing..." : "Review Code"}
+              <span aria-hidden="true">{isStreaming ? '◌' : '✦'}</span>
+              {isStreaming ? 'Reviewing…' : 'Review Code'} <span className="hidden sm:inline text-xs opacity-70">⌘↵</span>
             </button>
           </div>
         </div>
 
-        {/* Drag handle */}
+        {/* Drag handle is desktop-only; mobile stacks the workflow. */}
         <div
           onMouseDown={() => setIsDragging(true)}
-          className="w-5 flex-shrink-0 flex items-center justify-center cursor-col-resize group"
+          className="review-divider hidden md:flex w-5 flex-shrink-0 items-center justify-center cursor-col-resize group"
         >
-          <div className={`w-1 h-14 rounded-full transition ${isDragging ? 'bg-[#E3B341]' : 'bg-[#2A2F3D] group-hover:bg-[#5B6274]'}`}></div>
+          <div className={`w-1 h-14 rounded-full transition ${isDragging ? 'bg-[#38BDF8]' : 'bg-[#263A57] group-hover:bg-[#5B7898]'}`}></div>
         </div>
 
-        <div className="min-w-0" style={{ width: `calc(${100 - editorWidth}% - 10px)` }}>
+        <div className={`results-column min-w-0 ${expandedPane === 'results' ? 'pane-expanded' : ''}`} style={{ '--results-width': `${100 - editorWidth}%` }}>
           <ReviewPanel
             streamingText={streamingText}
             parsedReview={parsedReview}
             isStreaming={isStreaming}
+            error={reviewError}
+            onRetry={handleReview}
+            onRevealLine={(line) => editorRef.current?.revealLine(line)}
+            isExpanded={expandedPane === 'results'}
+            onToggleExpand={() => setExpandedPane(expandedPane === 'results' ? null : 'results')}
           />
         </div>
       </div>
-
-      {showPopup && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="relative bg-[#171B24] border border-[#2A2F3D] rounded-2xl p-8 w-full max-w-sm text-center shadow-2xl shadow-black/50">
-            <button
-              onClick={() => setShowPopup(false)}
-              className="absolute top-4 right-4 text-[#5B6274] hover:text-[#E7E9EE] text-sm transition"
-              aria-label="Close"
-            >
-              ✕
-            </button>
-            <div className="w-14 h-14 mx-auto mb-5 rounded-full bg-[#E3B341]/10 border border-[#E3B341]/30 flex items-center justify-center text-2xl">
-              🔐
-            </div>
-            <h2 className="text-[#E7E9EE] text-xl font-bold mb-2">Sign up to review code</h2>
-            <p className="text-[#8B92A5] text-sm mb-7">
-              Create a free account to get AI-powered code reviews instantly.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowPopup(false)}
-                className="flex-1 bg-[#1E2330] hover:bg-[#262C3B] border border-[#2A2F3D] text-[#E7E9EE] px-4 py-2.5 rounded-lg text-sm transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => navigate('/register')}
-                className="flex-1 bg-[#E3B341] hover:bg-[#EEC565] text-[#1B1500] px-4 py-2.5 rounded-lg text-sm font-medium transition"
-              >
-                Sign Up
-              </button>
-            </div>
-            <p className="text-[#5B6274] text-xs mt-5">
-              Already have an account?{' '}
-              <span
-                onClick={() => navigate('/login')}
-                className="text-[#E3B341] cursor-pointer hover:underline"
-              >
-                Sign In
-              </span>
-            </p>
-          </div>
-        </div>
-      )}
+      {expandedPane && <button className="pane-backdrop" aria-label="Close expanded view" onClick={() => setExpandedPane(null)} />}
     </div>
   );
 };

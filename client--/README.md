@@ -1,4 +1,8 @@
-# React + Vite
+# Nexus Review
+
+AI-powered code review with Monaco editing, streamed findings, and actionable fixes.
+
+## Development
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
