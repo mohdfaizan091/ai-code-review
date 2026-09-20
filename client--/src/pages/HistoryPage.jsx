@@ -23,7 +23,7 @@ const HistoryPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#10131A] text-[#E7E9EE]">
+    <div className="min-h-screen bg-[#08111F] text-[#E5EDF9]">
 
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-[#2A2F3D]">
@@ -50,11 +50,11 @@ const HistoryPage = () => {
         )}
 
         {reviews.map((review) => (
-          <div key={review._id} className="bg-[#171B24] border border-[#2A2F3D] rounded-lg p-4 flex items-start gap-4">
+          <div key={review._id} className="bg-[#0F1B2D] border border-[#263A57] rounded-lg p-4 flex items-start gap-4">
             <ScoreBadge score={review.feedback.overall_score} />
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs bg-[#1E2330] border border-[#2A2F3D] px-2 py-0.5 rounded-full text-[#8B92A5] capitalize">
+                <span className="text-xs bg-[#16243A] border border-[#263A57] px-2 py-0.5 rounded-full text-[#9DB0C9] capitalize">
                   {review.language}
                 </span>
                 <span className="text-xs text-[#5B6274]">

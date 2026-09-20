@@ -13,21 +13,22 @@ const Navbar = () => {
     window.location.href = '/';
   };
 
-  const pill = "px-4 py-2 rounded-lg text-sm border border-[#2A2F3D] transition";
+  const pill = "rounded-md px-3 py-2 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400";
 
   return (
-    <div className="flex items-center justify-between px-6 py-3 border-b border-[#2A2F3D] bg-[#10131A]">
-      <h1
+    <div className="flex items-center justify-between gap-3 border-b border-[#263A57] bg-[#08111F]/95 px-4 py-3 backdrop-blur md:px-6">
+      <button
         onClick={() => navigate('/')}
-        className={`${pill} font-semibold cursor-pointer text-[#E7E9EE] hover:border-[#5B6274]`}
+        className="flex shrink-0 items-center gap-2 text-sm font-semibold tracking-tight text-[#E5EDF9]"
       >
-        AI Code Review
-      </h1>
+        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#38BDF8] font-mono text-xs font-bold text-[#082032]" aria-hidden="true">&gt;_</span>
+        <span className="hidden sm:inline">Nexus Review</span>
+      </button>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1 sm:gap-2">
         <button
           onClick={() => navigate('/')}
-          className={`${pill} text-[#8B92A5] hover:text-[#E7E9EE] hover:border-[#5B6274]`}
+          className={`${pill} text-[#9DB0C9] hover:bg-[#16243A] hover:text-[#E5EDF9]`}
         >
           Home
         </button>
@@ -36,13 +37,13 @@ const Navbar = () => {
           <>
             <button
               onClick={() => navigate('/history')}
-              className={`${pill} text-[#8B92A5] hover:text-[#E7E9EE] hover:border-[#5B6274]`}
+              className={`${pill} hidden text-[#9DB0C9] hover:bg-[#16243A] hover:text-[#E5EDF9] sm:inline-flex`}
             >
               History
             </button>
             <button
               onClick={handleLogout}
-              className={`${pill} bg-[#1E2330] hover:bg-[#262C3B] text-[#E7E9EE]`}
+              className={`${pill} bg-[#16243A] text-[#E5EDF9] hover:bg-[#1C304C]`}
             >
               Logout
             </button>
@@ -51,13 +52,13 @@ const Navbar = () => {
           <>
             <button
               onClick={() => navigate('/login')}
-              className={`${pill} text-[#E7E9EE] hover:border-[#5B6274]`}
+              className={`${pill} text-[#C9D9EC] hover:bg-[#16243A] hover:text-[#E5EDF9]`}
             >
               Sign In
             </button>
             <button
               onClick={() => navigate('/register')}
-              className={`${pill} bg-[#E3B341] hover:bg-[#EEC565] border-none font-medium text-[#1B1500]`}
+              className={`${pill} bg-[#E3B341] font-medium text-[#1B1500] hover:bg-[#EEC565]`}
             >
               Sign Up
             </button>

@@ -29,10 +29,13 @@ const LoginPage = () => {
     setLoading(false);
 };
   return (
-    <div className="min-h-screen bg-[#10131A] flex items-center justify-center">
-      <div className="bg-[#171B24] border border-[#2A2F3D] rounded-lg p-8 w-full max-w-md">
-        <h1 className="text-[#E7E9EE] text-2xl font-bold mb-6">AI Code Review</h1>
-        <h2 className="text-[#8B92A5] text-sm mb-6">Sign in to your account</h2>
+    <div className="min-h-screen bg-[#08111F] flex items-center justify-center px-4">
+      <div className="bg-[#0F1B2D] border border-[#263A57] rounded-xl p-7 sm:p-8 w-full max-w-md shadow-2xl shadow-sky-950/20">
+        <div className="mb-7">
+          <div className="flex items-center gap-2.5 text-base font-semibold text-[#E5EDF9]"><span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#38BDF8] font-mono text-xs font-bold text-[#082032]" aria-hidden="true">&gt;_</span>Nexus Review</div>
+          <h1 className="mt-6 text-2xl font-bold tracking-tight text-[#E5EDF9]">Welcome back</h1>
+          <p className="mt-1 text-sm text-[#9DB0C9]">Sign in to continue reviewing with context.</p>
+        </div>
 
         {error && (
           <div className="bg-[#E2685E]/20 text-[#E2685E] text-sm px-3 py-2 rounded-lg mb-4">
@@ -42,22 +45,22 @@ const LoginPage = () => {
 
         <div className="space-y-4">
           <div>
-            <label className="text-[#8B92A5] text-sm mb-1 block">Email</label>
+            <label className="text-[#9DB0C9] text-sm mb-1 block">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[#1E2330] text-[#E7E9EE] px-3 py-2 rounded-lg border border-[#2A2F3D] focus:outline-none focus:border-[#E3B341]"
+              className="w-full bg-[#16243A] text-[#E5EDF9] px-3 py-2 rounded-lg border border-[#263A57] focus:outline-none focus:border-[#38BDF8]"
               placeholder="you@example.com"
             />
           </div>
           <div>
-            <label className="text-[#8B92A5] text-sm mb-1 block">Password</label>
+            <label className="text-[#9DB0C9] text-sm mb-1 block">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-[#1E2330] text-[#E7E9EE] px-3 py-2 rounded-lg border border-[#2A2F3D] focus:outline-none focus:border-[#E3B341]"
+              className="w-full bg-[#16243A] text-[#E5EDF9] px-3 py-2 rounded-lg border border-[#263A57] focus:outline-none focus:border-[#38BDF8]"
               placeholder="••••••"
             />
           </div>
@@ -70,9 +73,9 @@ const LoginPage = () => {
           </button>
         </div>
 
-        <p className="text-[#5B6274] text-sm text-center mt-4">
+        <p className="text-[#9DB0C9] text-sm text-center mt-5">
           Don't have an account?{' '}
-          <Link to="/register" className="text-[#E3B341] hover:underline">
+          <Link to="/register" className="text-[#7DD3FC] hover:text-[#BAE6FD] hover:underline">
             Register
           </Link>
         </p>

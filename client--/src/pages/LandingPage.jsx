@@ -14,18 +14,21 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#10131A] text-[#E7E9EE] font-sans">
+    <div className="min-h-screen bg-[#08111F] text-[#E5EDF9] font-sans">
 
       {/* NAV */}
-      <nav className="sticky top-0 z-10 border-b border-[#20242F] bg-[#10131A]/90 backdrop-blur">
+      <nav className="sticky top-0 z-10 border-b border-[#263A57] bg-[#08111F]/90 backdrop-blur">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-semibold text-sm">
-            <span className="w-5 h-5 rounded bg-[#E3B341] text-[#1B1500] flex items-center justify-center font-mono text-xs font-bold">&gt;_</span>
-            Ai-Code-Review
+            <span className="w-5 h-5 rounded bg-[#38BDF8] text-[#082032] flex items-center justify-center font-mono text-xs font-bold">&gt;_</span>
+            Nexus Review
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-[#8B92A5]">
             <a href="#features" className="hover:text-white transition">Features</a>
             <a href="#how-it-works" className="hover:text-white transition">How it works</a>
+            <a href="#about" className="hover:text-white transition">About</a>
+            <a href="#webhook" className="hover:text-white transition">Webhook</a>
+            <a href="#rag" className="hover:text-white transition">RAG</a>
             <a
               href="https://github.com/mohdfaizan091/ai-code-review"
               target="_blank" rel="noreferrer"
@@ -68,8 +71,8 @@ const LandingPage = () => {
       {/* HERO */}
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 grid md:grid-cols-2 gap-14 items-center">
         <div>
-          <p className="text-xs font-semibold tracking-widest text-[#E3B341] uppercase mb-4">
-            <span className="text-[#8A6B27]">// </span>AI code review
+          <p className="text-xs font-semibold tracking-widest text-[#38BDF8] uppercase mb-4">
+            <span className="text-[#38BDF8]/60">// </span>Nexus Review
           </p>
           <h1 className="text-4xl md:text-[44px] leading-[1.15] font-bold tracking-tight mb-5">
             Ship code your<br />reviewer would <span className="text-[#E3B341]">approve</span>.
@@ -98,7 +101,7 @@ const LandingPage = () => {
         <div className="rounded-xl border border-[#2A2F3D] bg-[#171B24] overflow-hidden shadow-2xl">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-[#20242F]">
             <span className="w-2.5 h-2.5 rounded-full bg-[#E2685E]"></span>
-            <span className="w-2.5 h-2.5 rounded-full bg-[#E3B341]"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#F97316]"></span>
             <span className="w-2.5 h-2.5 rounded-full bg-[#5FBD8A]"></span>
             <span className="ml-1.5 text-xs text-[#5B6274] font-mono">auth.controller.js</span>
           </div>
@@ -155,8 +158,8 @@ const LandingPage = () => {
       {/* FEATURES */}
       <section id="features" className="max-w-6xl mx-auto px-6 py-20">
         <div className="max-w-lg mb-11">
-          <p className="text-xs font-semibold tracking-widest text-[#E3B341] uppercase mb-3">
-            <span className="text-[#8A6B27]">// </span>Features
+          <p className="text-xs font-semibold tracking-widest text-[#38BDF8] uppercase mb-3">
+            <span className="text-[#38BDF8]/60">// </span>Features
           </p>
           <h2 className="text-3xl font-bold tracking-tight mb-2">Everything a real reviewer checks for</h2>
           <p className="text-[#8B92A5] text-sm">Not a linter. Structured, contextual feedback on the things that actually break in production.</p>
@@ -165,13 +168,13 @@ const LandingPage = () => {
           {[
             ['//', 'Live streaming review', 'Feedback appears token-by-token over SSE — no spinner, no waiting on a full response.'],
             ['!', 'Severity-tagged issues', 'Every issue is ranked high, medium, or low, so you fix what matters first.'],
-            ['{ }', 'Structured JSON output', 'Issues, suggested fixes, and a quality score — parsed, not buried in prose.'],
+            ['{ }', 'Structured review output', 'Issues, inline fixes, and a quality score — parsed, not buried in prose.'],
             ['⌘', 'Monaco editor', 'The same editor that powers VS Code, with full syntax highlighting.'],
             ['◐', 'Guest mode', 'Try a full review with no account. Sign up only when you want history saved.'],
             ['↺', 'Review history', 'Every past review saved and searchable, paginated for quick recall.'],
           ].map(([icon, title, desc], i) => (
             <div key={i} className="bg-[#10131A] p-6">
-              <div className="w-8 h-8 rounded-md bg-[#1E2330] flex items-center justify-center mb-4 text-[#E3B341] font-mono font-bold text-sm">{icon}</div>
+              <div className="w-8 h-8 rounded-md bg-[#1E2330] flex items-center justify-center mb-4 text-[#38BDF8] font-mono font-bold text-sm">{icon}</div>
               <h3 className="text-sm font-semibold mb-1.5">{title}</h3>
               <p className="text-[13px] text-[#8B92A5] leading-relaxed">{desc}</p>
             </div>
@@ -182,19 +185,19 @@ const LandingPage = () => {
       {/* HOW IT WORKS */}
       <section id="how-it-works" className="max-w-6xl mx-auto px-6 pb-20">
         <div className="max-w-lg mb-11">
-          <p className="text-xs font-semibold tracking-widest text-[#E3B341] uppercase mb-3">
-            <span className="text-[#8A6B27]">// </span>How it works
+          <p className="text-xs font-semibold tracking-widest text-[#38BDF8] uppercase mb-3">
+            <span className="text-[#38BDF8]/60">// </span>How it works
           </p>
           <h2 className="text-3xl font-bold tracking-tight">Three steps, one streamed response</h2>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {[
             ['01', 'Paste your code', 'Drop a function or a full file into the Monaco editor. Five languages supported.'],
-            ['02', 'Watch it stream', 'Issues and suggestions render live as Groq analyzes your code, line by line.'],
+            ['02', 'Watch it stream', 'Findings and inline fixes render live as Groq analyzes your code, line by line.'],
             ['03', 'Fix and re-run', 'Apply the suggested fixes, re-run the review, and track your score improve.'],
           ].map(([n, title, desc], i) => (
             <div key={i}>
-              <div className="font-mono text-xs text-[#E3B341] mb-3">{n}</div>
+              <div className="font-mono text-xs text-[#38BDF8] mb-3">{n}</div>
               <h3 className="text-base font-semibold mb-2">{title}</h3>
               <p className="text-[13.5px] text-[#8B92A5]">{desc}</p>
             </div>
@@ -202,12 +205,32 @@ const LandingPage = () => {
         </div>
       </section>
 
+      <section id="about" className="max-w-6xl mx-auto px-6 pb-20">
+        <div className="max-w-lg mb-10">
+          <p className="text-xs font-semibold tracking-widest text-[#38BDF8] uppercase mb-3"><span className="text-[#38BDF8]/60">// </span>Built for real review workflows</p>
+          <h2 className="text-3xl font-bold tracking-tight mb-2">Context, signal, and a clear next step.</h2>
+          <p className="text-[#8B92A5] text-sm">Nexus Review helps teams understand risk without replacing the judgment that makes a review valuable.</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <article id="webhook" className="rounded-xl border border-[#263A57] bg-[#0F1B2D] p-6">
+            <p className="font-mono text-xs font-semibold text-[#38BDF8]">WEBHOOK</p>
+            <h3 className="mt-3 text-lg font-semibold">Review pull requests where they happen</h3>
+            <p className="mt-2 text-sm leading-relaxed text-[#8B92A5]">Connect the GitHub PR bot to surface structured review feedback directly in your pull request workflow.</p>
+          </article>
+          <article id="rag" className="rounded-xl border border-[#263A57] bg-[#0F1B2D] p-6">
+            <p className="font-mono text-xs font-semibold text-[#38BDF8]">RAG CONTEXT</p>
+            <h3 className="mt-3 text-lg font-semibold">Review with repository awareness</h3>
+            <p className="mt-2 text-sm leading-relaxed text-[#8B92A5]">Give reviews the surrounding repository context they need to produce feedback that fits your conventions and architecture.</p>
+          </article>
+        </div>
+      </section>
+
       {/* CTA SPLIT */}
       <section className="max-w-6xl mx-auto px-6 pb-20">
         <div className="rounded-2xl border border-[#2A2F3D] bg-[#171B24] p-8 md:p-14 grid md:grid-cols-[1fr_360px] gap-10 items-center">
           <div>
-            <p className="text-xs font-semibold tracking-widest text-[#E3B341] uppercase mb-3">
-              <span className="text-[#8A6B27]">// </span>Get started
+            <p className="text-xs font-semibold tracking-widest text-[#38BDF8] uppercase mb-3">
+              <span className="text-[#38BDF8]/60">// </span>Get started
             </p>
             <h2 className="text-3xl font-bold tracking-tight mb-4">Your first review takes under a minute.</h2>
             <p className="text-[#8B92A5] text-sm mb-5">No credit card. No install. Just paste code and watch the feedback stream in.</p>
@@ -247,12 +270,26 @@ const LandingPage = () => {
 
       {/* FOOTER */}
       <footer className="border-t border-[#20242F] py-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row gap-4 items-center justify-between">
-          <p className="text-xs text-[#5B6274]">© 2026 Ai-Code-Review — built by Mohd Faizan</p>
-          <div className="flex gap-6 text-xs text-[#8B92A5]">
-            <a href="https://github.com/mohdfaizan091/ai-code-review" target="_blank" rel="noreferrer" className="hover:text-white transition">GitHub</a>
-            <a href="https://www.linkedin.com/in/mohd-faizan-27270732a/" target="_blank" rel="noreferrer" className="hover:text-white transition">LinkedIn</a>
-            
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex flex-col gap-7 sm:flex-row sm:items-start sm:justify-between">
+            <div className="max-w-sm">
+              <div className="flex items-center gap-2.5 text-base font-semibold tracking-tight">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#38BDF8] font-mono text-xs font-bold text-[#082032]" aria-hidden="true">&gt;_</span>
+                Nexus Review
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-[#8B92A5]">Focused AI feedback for safer, cleaner code—right where you review it.</p>
+            </div>
+            <nav aria-label="Footer navigation" className="sm:min-w-44">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#38BDF8]">Product</p>
+              <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs sm:flex-col sm:gap-2.5">
+                <a href="/" className="w-fit text-[#8B92A5] transition hover:text-white focus-visible:text-white">Home</a>
+                <a href="/editor" className="w-fit text-[#8B92A5] transition hover:text-white focus-visible:text-white">New Review</a>
+                <a href="/history" className="w-fit text-[#8B92A5] transition hover:text-white focus-visible:text-white">History</a>
+              </div>
+            </nav>
+          </div>
+          <div className="mt-7 border-t border-[#20242F] pt-4">
+            <p className="text-xs text-[#5B6274]">© 2026 Nexus Review — built by Mohd Faizan</p>
           </div>
         </div>
       </footer>

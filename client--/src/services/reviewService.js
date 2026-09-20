@@ -72,8 +72,10 @@ export const streamReview = async (code, language, onToken, onComplete, onError)
     }
   }
 
-  // If the loop exits without [DONE] (should not happen), still call onComplete
-  onComplete(fullText);
+  // A closed stream without its completion sentinel is partial, not a successful review.
+  if (typeof onError === 'function') {
+    onError('The review stream ended before it completed.');
+  }
 };
 
 export const getReviews = async () => {
