@@ -15,18 +15,24 @@ The system follows a layered architecture where the backend separates routing, c
 
 ## 2. High-Level Architecture
 
+```mermaid
 flowchart LR
     User([User])
 
     Frontend["React/Vite Frontend<br/>client--"]
+
     Backend["Express Backend<br/>server/server.js"]
 
     Auth["Authentication / JWT<br/>HttpOnly cookie + authMiddleware"]
+
     Mongo[("MongoDB<br/>User and Review collections")]
+
     ReviewService["Code Review Service<br/>reviewService.js + prReviewService.js"]
+
     Groq["Groq AI API<br/>groqProvider.js"]
 
     GitHub["GitHub"]
+
     Webhook["GitHub Webhook<br/>/webhook/github"]
 
     subgraph NormalFlow["Normal Code Review Flow"]
@@ -57,3 +63,4 @@ flowchart LR
 
     Auth -.->|"JWT_SECRET"| Backend
     Auth -.->|"Login/register user data"| Mongo
+```
