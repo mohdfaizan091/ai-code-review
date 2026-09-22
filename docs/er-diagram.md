@@ -125,4 +125,4 @@ userId: {
 
 ## 8. Scope
 
-No additional database entities or relationships are defined in the analyzed Mongoose model files — `User` and `Review` are the complete database structure.
+No additional database entities or relationships are defined in the analyzed Mongoose model files — `User` and `Review` are the complete database structure.git
