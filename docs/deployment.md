@@ -18,7 +18,7 @@ flowchart LR
     Browser["User's Browser<br/>Client runtime"]
 
     subgraph Vercel["Vercel<br/>(documented in README)"]
-        Frontend["React/Vite Frontend<br/>client--<br/>Client-side application"]
+        Frontend["React/Vite Frontend<br/>client/<br/>Client-side application"]
     end
 
     subgraph Render["Render<br/>(documented in README)"]
@@ -53,50 +53,28 @@ flowchart LR
     Backend -->|"PR analysis request"| Groq
     Groq -->|"AI analysis result"| Backend
 
-    Backend -->|"Review comments/status"| GitHub
-
     Webhook -.->|"Runs as part of backend deployment"| Backend
 ```
 
 ## 3. Deployment Components
 
-### Client-Side Application
+### Client-Side Application (Vercel)
 
-The React/Vite frontend is located in:
-
-```text
-client--
-```
-
-The README documents the frontend deployment as **Vercel**.
-
-The user's browser loads the frontend from Vercel and executes the React application client-side.
-
-Relevant frontend paths include:
+The React/Vite frontend is located in `client/` and is documented as deployed on **Vercel**. Relevant paths:
 
 ```text
-client--/src/main.jsx
-client--/src/App.jsx
-client--/src/pages
-client--/src/components
-client--/src/services
+client/src/main.jsx
+client/src/App.jsx
+client/src/pages
+client/src/components
+client/src/services
 ```
 
-The frontend sends authenticated API requests to the backend with credentials included, allowing the JWT cookie to be sent.
+The frontend sends authenticated API requests to the backend with credentials included, so the JWT cookie is sent with each request.
 
----
+### Backend Server (Render)
 
-### Backend Server
-
-The Node.js/Express backend is located in:
-
-```text
-server
-```
-
-The README documents the backend deployment as **Render**.
-
-The backend exposes:
+The Node.js/Express backend (`server/`, started by `server/server.js`) is documented as deployed on **Render**. It exposes:
 
 ```text
 /v1/api/auth
@@ -105,28 +83,11 @@ The backend exposes:
 /webhook/github
 ```
 
-The backend is started by:
+The backend is responsible for authentication, code-review processing, AI API communication, database operations, and GitHub integration (including webhook handling) — all within the same deployed service. The GitHub webhook endpoint is not a separately deployed service; it runs as a route within this backend.
 
-```text
-server/server.js
-```
+### Database (MongoDB Atlas)
 
-The backend is responsible for:
-
-- Authentication
-- Code-review processing
-- AI API communication
-- Database operations
-- GitHub integration
-- GitHub webhook handling
-
----
-
-### Database
-
-The repository uses MongoDB through Mongoose.
-
-Relevant files include:
+The backend connects to MongoDB Atlas via Mongoose, using the `MONGO_URI` environment variable. Relevant files:
 
 ```text
 server/src/config/db.js
@@ -134,476 +95,42 @@ server/src/models/User.js
 server/src/models/Review.js
 ```
 
-The README documents the database deployment as **MongoDB Atlas**.
-
-The backend connects to MongoDB using the:
+The database stores user accounts and code-review records, related one-to-many:
 
 ```text
-MONGO_URI
+User (1) ──── (0..*) Review
 ```
 
-environment variable.
+### Groq AI Integration
 
-The database stores:
+The backend communicates with the external Groq API through `server/src/providers/groqProvider.js`, which sends streaming chat-completion requests. Generated review tokens are relayed to the frontend via the backend's SSE response (see the flow in Section 2).
 
-- User information
-- Code-review records
+## 4. Environment Configuration
 
----
+The backend uses environment variables (validated in `server/src/config/envConfig.js`) for:
 
-### Groq AI API
-
-The backend communicates with the external Groq API through:
-
-```text
-server/src/providers/groqProvider.js
-```
-
-The provider sends streaming chat-completion requests to Groq.
-
-The generated review tokens are returned through the backend's Server-Sent Events (SSE) response to the frontend.
-
-The normal AI flow is:
-
-```text
-Browser
-   ↓
-Vercel
-   ↓
-Render Backend
-   ↓
-groqProvider.js
-   ↓
-Groq AI API
-   ↓
-Render Backend
-   ↓
-SSE
-   ↓
-Vercel Frontend
-   ↓
-Browser
-```
-
----
-
-## 4. GitHub Pull Request Deployment Flow
-
-GitHub provides the pull-request event that triggers the automated review process.
-
-The webhook integration is implemented through:
-
-```text
-server/src/routes/webhookRoutes.js
-server/src/controllers/webhookController.js
-```
-
-GitHub sends pull-request events to:
-
-```text
-POST /webhook/github
-```
-
-For `pull_request` events with `opened` or `synchronize` actions, the backend:
-
-1. Verifies the webhook signature.
-2. Retrieves changed files and related repository content.
-3. Analyzes the changes.
-4. Uses Groq for AI analysis.
-5. Posts review results back to GitHub when issues are found.
-
-The GitHub integration is handled primarily through:
-
-```text
-server/src/services/githubService.js
-server/src/services/prReviewService.js
-```
-
-The deployment flow is:
-
-```text
-GitHub
-   │
-   │ pull_request event
-   ▼
-GitHub Webhook
-   │
-   │ POST /webhook/github
-   ▼
-Render Backend
-   │
-   ├── Verify webhook signature
-   │
-   ├── Fetch PR files/content
-   │
-   ├── Analyze PR changes
-   │
-   └── Request AI analysis
-             │
-             ▼
-          Groq AI
-             │
-             ▼
-       Review Result
-             │
-             ▼
-        GitHub API
-             │
-             ▼
-      Pull Request Review
-```
-
----
-
-## 5. Normal Code Review Deployment Flow
-
-The normal code-review deployment flow is:
-
-```text
-User's Browser
-       │
-       ▼
-Vercel
-React/Vite Frontend
-       │
-       │ HTTP API
-       ▼
-Render
-Node.js/Express Backend
-       │
-       ├───────────────► MongoDB Atlas
-       │
-       └───────────────► Groq AI API
-                              │
-                              ▼
-                         AI Response
-                              │
-                              ▼
-                       Render Backend
-                              │
-                              │ SSE
-                              ▼
-                       Vercel Frontend
-                              │
-                              ▼
-                         User Browser
-```
-
----
-
-## 6. Authentication Deployment Flow
-
-Authentication is handled between the frontend and the backend.
-
-The general flow is:
-
-```text
-User
-  │
-  ▼
-React/Vite Frontend
-  │
-  │ Authentication Request
-  ▼
-Render Backend
-  │
-  ▼
-Authentication Services
-  │
-  ▼
-MongoDB Atlas
-```
-
-After successful authentication, the backend uses a JWT stored in an HttpOnly cookie.
-
-The frontend includes credentials in authenticated API requests so that the cookie can be sent to the backend.
-
----
-
-## 7. Environment Configuration
-
-The backend uses environment variables for important configuration values.
-
-These include configuration for:
-
-- MongoDB connection
+- MongoDB connection (`server/src/config/db.js`)
 - JWT authentication
-- Groq API
-- GitHub integration
-- GitHub webhook verification
+- Groq API access
+- GitHub integration and webhook signature verification
 
-Environment configuration is handled through:
+## 5. External Services &amp; Responsibilities
 
-```text
-server/src/config/envConfig.js
-```
+| Component | Hosting / Location | Responsibility |
+|---|---|---|
+| React/Vite Frontend | Vercel | Client-side application, executed in the user's browser |
+| Node.js/Express Backend | Render | REST API, authentication, review processing, GitHub webhook handling |
+| MongoDB Atlas | MongoDB Atlas | Persistent storage for users and reviews |
+| Groq AI API | External | AI-powered code analysis |
+| GitHub / GitHub Webhook | External | Repository and pull-request integration; sends `pull_request` events |
 
-The MongoDB connection is handled through:
+## 6. Deployment Security
 
-```text
-server/src/config/db.js
-```
+- JWT authentication with HttpOnly cookies, verified via authentication middleware
+- GitHub webhook signature verification (`x-hub-signature-256`)
+- Password hashing using bcrypt
+- Sensitive configuration (API keys, database credentials, JWT secret, webhook secret) kept in environment variables rather than source code
 
----
+## 7. Deployment Limitations
 
-## 8. Vercel Deployment
-
-The frontend deployment is documented as Vercel.
-
-The deployed frontend contains the React/Vite client application:
-
-```text
-client--
-```
-
-The browser executes the frontend application and communicates with the backend through HTTP requests.
-
-The frontend also receives streamed review responses using SSE.
-
----
-
-## 9. Render Deployment
-
-The backend deployment is documented as Render.
-
-The deployed backend contains:
-
-```text
-server/
-```
-
-The Render-hosted backend handles:
-
-- REST API requests
-- Authentication
-- Code review requests
-- SSE streaming
-- GitHub webhook requests
-- GitHub API communication
-- Database operations
-- AI API communication
-
-The GitHub webhook endpoint runs as part of this backend deployment.
-
----
-
-## 10. MongoDB Atlas Deployment
-
-MongoDB Atlas provides the persistent database.
-
-The backend connects to MongoDB through Mongoose.
-
-The primary models are:
-
-```text
-User
-Review
-```
-
-The database relationship is:
-
-```text
-User
- │
- │ 1
- │
- │ 0..*
- ▼
-Review
-```
-
-The database stores persistent application data while the backend handles access through the Mongoose models.
-
----
-
-## 11. External Service Dependencies
-
-The deployed application depends on the following external services:
-
-| Service | Purpose |
-|---|---|
-| Vercel | Frontend hosting |
-| Render | Backend hosting |
-| MongoDB Atlas | Database hosting |
-| Groq AI API | AI-powered code analysis |
-| GitHub | Repository and pull-request integration |
-
-The deployment architecture therefore consists of hosted application components combined with external APIs and services.
-
----
-
-## 12. Network Communication
-
-The major communication paths are:
-
-### Browser → Frontend
-
-```text
-Browser
-   ↓
-Vercel
-```
-
-The browser loads and executes the React/Vite application.
-
-### Frontend → Backend
-
-```text
-Vercel Frontend
-   ↓
-Render Backend
-```
-
-The frontend sends API requests for authentication and code reviews.
-
-### Backend → Database
-
-```text
-Render Backend
-   ↓
-MongoDB Atlas
-```
-
-The backend reads and writes users and reviews through Mongoose.
-
-### Backend → Groq
-
-```text
-Render Backend
-   ↓
-Groq AI API
-```
-
-The backend sends code-review requests and receives AI-generated results.
-
-### GitHub → Backend
-
-```text
-GitHub
-   ↓
-/webhook/github
-   ↓
-Render Backend
-```
-
-GitHub sends pull-request webhook events to the backend.
-
-### Backend → GitHub
-
-```text
-Render Backend
-   ↓
-GitHub API
-```
-
-The backend retrieves pull-request context and can post review results.
-
----
-
-## 13. Deployment Security
-
-The deployment architecture includes several security mechanisms:
-
-- JWT authentication.
-- HttpOnly authentication cookies.
-- JWT verification through authentication middleware.
-- GitHub webhook signature verification.
-- Environment variables for sensitive configuration.
-- Password hashing using bcrypt.
-
-Sensitive configuration such as API keys, database credentials, JWT secrets, and webhook secrets is handled through environment configuration rather than being directly embedded in application source code.
-
----
-
-## 14. Deployment Responsibilities
-
-| Component | Responsibility |
-|---|---|
-| User Browser | Executes frontend application |
-| Vercel | Hosts React/Vite frontend |
-| Render | Hosts Node.js/Express backend |
-| MongoDB Atlas | Persistent data storage |
-| Groq AI API | AI code analysis |
-| GitHub | Repository and pull-request integration |
-| GitHub Webhook | Sends pull-request events |
-
----
-
-## 15. Current Deployment Architecture
-
-The current deployment architecture can be summarized as:
-
-```text
-                         Internet
-                            │
-                            ▼
-                    ┌──────────────┐
-                    │ User Browser │
-                    └──────┬───────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │    Vercel    │
-                    │ React / Vite │
-                    └──────┬───────┘
-                           │
-                     HTTP / SSE
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │    Render    │
-                    │ Node/Express │
-                    └──────┬───────┘
-                           │
-              ┌────────────┼─────────────┐
-              │            │             │
-              ▼            ▼             ▼
-       MongoDB Atlas   Groq AI API    GitHub API
-              │                          ▲
-              │                          │
-              │                    PR Review
-              │                          │
-              └──────────────────────────┘
-
-GitHub
-   │
-   │ pull_request webhook
-   ▼
-Render Backend
-```
-
-## 16. Deployment Limitations
-
-The deployment locations described above are based on the project README.
-
-The repository does not identify the GitHub webhook as a separately deployed service. It is treated as an endpoint running within the backend deployment.
-
-The repository also does not provide deployment manifests for the hosting infrastructure in the analyzed source.
-
-Therefore, the diagram represents the documented deployment architecture rather than independently verifying the current live infrastructure configuration.
-
-## 17. Summary
-
-The AI Code Review System uses a distributed deployment architecture:
-
-```text
-Frontend
-   │
-   │ Vercel
-   ▼
-Backend
-   │
-   ├── Render
-   │
-   ├── MongoDB Atlas
-   │
-   ├── Groq AI API
-   │
-   └── GitHub API
-```
-
-The normal code-review flow uses the browser, Vercel frontend, Render backend, Groq AI, and MongoDB Atlas.
-
-The automated pull-request review flow uses GitHub webhooks, the Render backend, Groq AI, and the GitHub API.
-
-The GitHub webhook endpoint is logically part of the backend deployment rather than a separately deployed application.
+The deployment locations described above are based on the project README rather than independently verified live infrastructure. The GitHub webhook is not a separately deployed service — it runs as an endpoint within the backend deployment. No separate deployment manifests were available in the analyzed source.
