@@ -11,12 +11,12 @@ The frontend is implemented using React/Vite, while the backend uses Node.js and
 ```mermaid
 flowchart LR
 
-    subgraph Frontend["Frontend: client--"]
+    subgraph Frontend["Frontend: client/"]
         ReactVite["React/Vite Application<br/>src/main.jsx, src/App.jsx"]
 
         Pages["Pages<br/>LandingPage<br/>LoginPage<br/>RegisterPage<br/>HomePage<br/>HistoryPage"]
 
-        UI["Reusable UI Components<br/>CodeEditor<br/>ReviewPanel<br/>LanguageSelector<br/>Navbar<br/>ScoreBadge<br/>SeverityBadge<br/>ProtectedRoute"]
+        UI["Reusable UI Components<br/>CodeEditor<br/>ReviewPanel<br/>LanguageSelector<br/>Navbar<br/>ScoreBadge<br/>SeverityBadge"]
 
         FrontendServices["Frontend Services"]
         AuthFrontend["authService.js"]
@@ -113,10 +113,11 @@ flowchart LR
     ReviewService --> ReviewModel
 
     PRReviewService --> GroqProvider
+    PRReviewService --> RAGService
+    RAGService --> EmbeddingService
     GithubService --> GitHub
 
     AuthService --> UserModel
-    RAGService --> EmbeddingService
 
     AuthMiddleware --> EnvConfig
 
@@ -139,71 +140,34 @@ flowchart LR
 
 ### Frontend
 
-- The React/Vite application is bootstrapped by `client--/src/main.jsx` and `client--/src/App.jsx`.
-- `Pages` contains the application screens in `client--/src/pages`.
-- Reusable UI components are located under `client--/src/components`.
-- `client--/src/services/authService.js` communicates with authentication endpoints.
-- `client--/src/services/reviewService.js` sends review requests and consumes the streamed review response.
+- The React/Vite application is bootstrapped by `client/src/main.jsx` and `client/src/App.jsx`.
+- `Pages` contains the application screens in `client/src/pages`.
+- Reusable UI components are located under `client/src/components`.
+- `client/src/services/authService.js` communicates with authentication endpoints.
+- `client/src/services/reviewService.js` sends review requests and consumes the streamed review response.
 - `ProtectedRoute.jsx` uses the authentication service to restrict authenticated frontend routes.
 
 ### Backend Request Architecture
 
-The backend follows the repository's implemented:
+The backend follows the repository's implemented layering:
 
 ```text
-Routes
-   ↓
-Controllers
-   ↓
-Services
-   ↓
-Providers / Models
+Routes → Controllers → Services → Providers / Models
 ```
 
-Routes are defined under:
-
-```text
-server/src/routes
-```
-
-Controllers are defined under:
-
-```text
-server/src/controllers
-```
-
-Authentication checks are performed by:
-
-```text
-server/src/middleware/authMiddleware.js
-```
-
-Business logic is organized under:
-
-```text
-server/src/services
-```
-
-AI provider integration is implemented in:
-
-```text
-server/src/providers/groqProvider.js
-```
-
-MongoDB persistence is represented by:
-
-```text
-server/src/models/User.js
-server/src/models/Review.js
-```
+- Routes: `server/src/routes`
+- Controllers: `server/src/controllers`
+- Authentication checks: `server/src/middleware/authMiddleware.js`
+- Business logic: `server/src/services`
+- AI provider integration: `server/src/providers/groqProvider.js`
+- MongoDB persistence: `server/src/models/User.js`, `server/src/models/Review.js`
 
 ### AI and Review Processing
 
-- `reviewService.js` builds and streams normal code reviews.
-- `groqProvider.js` calls the external Groq AI API.
-- `reviewService.js` persists validated review results through `Review.js`.
+- `reviewService.js` builds and streams normal code reviews, then persists validated results through `Review.js`.
+- `groqProvider.js` calls the external Groq AI API and is shared by both review paths.
 - `prReviewService.js` supports the pull-request review path used by the GitHub webhook controller.
-- `ragService.js` and `embeddingService.js` exist as backend service components in `server/src/services`.
+- `ragService.js` retrieves relevant repository context (via `embeddingService.js`) so `prReviewService.js` can flag duplicate or inconsistent code during PR review.
 
 ### Database and Configuration
 
@@ -215,232 +179,28 @@ server/src/models/Review.js
 
 - GitHub sends pull-request events to `POST /webhook/github`.
 - `webhookRoutes.js` routes the event to `webhookController.js`.
-- The controller verifies the webhook signature, obtains pull-request information, and coordinates GitHub and PR review services.
+- The controller verifies the webhook signature, obtains pull-request information, and coordinates the GitHub and PR review services.
 - `githubService.js` communicates with the GitHub API to retrieve pull-request context and post review results back to GitHub.
 
-## 4. Frontend Component Structure
-
-The frontend can be summarized as:
-
-```text
-React/Vite Application
-        │
-        ├── Pages
-        │     ├── LandingPage
-        │     ├── LoginPage
-        │     ├── RegisterPage
-        │     ├── HomePage
-        │     └── HistoryPage
-        │
-        ├── UI Components
-        │     ├── CodeEditor
-        │     ├── ReviewPanel
-        │     ├── LanguageSelector
-        │     ├── Navbar
-        │     ├── ScoreBadge
-        │     ├── SeverityBadge
-        │     └── ProtectedRoute
-        │
-        └── Services
-              ├── authService.js
-              └── reviewService.js
-```
-
-## 5. Backend Component Structure
-
-The backend can be summarized as:
-
-```text
-Express Server
-      │
-      ├── Routes
-      │     ├── authRoutes.js
-      │     ├── reviewRoutes.js
-      │     ├── userRoutes.js
-      │     └── webhookRoutes.js
-      │
-      ├── Middleware
-      │     └── authMiddleware.js
-      │
-      ├── Controllers
-      │     ├── authController.js
-      │     ├── reviewController.js
-      │     ├── userController.js
-      │     └── webhookController.js
-      │
-      ├── Services
-      │     ├── authService.js
-      │     ├── reviewService.js
-      │     ├── githubService.js
-      │     ├── prReviewService.js
-      │     ├── ragService.js
-      │     └── embeddingService.js
-      │
-      ├── Providers
-      │     └── groqProvider.js
-      │
-      ├── Models
-      │     ├── User.js
-      │     └── Review.js
-      │
-      └── Configuration
-            ├── envConfig.js
-            └── db.js
-```
-
-## 6. External Component Relationships
-
-The backend communicates with three primary external systems:
-
-```text
-                    ┌──────────────┐
-                    │   Groq AI    │
-                    └──────▲───────┘
-                           │
-                    groqProvider.js
-                           │
-                           │
-┌──────────────┐     ┌────┴─────────┐     ┌──────────────┐
-│   MongoDB    │◄────│   Backend    │────►│    GitHub    │
-└──────────────┘     └──────────────┘     └──────────────┘
-                           ▲
-                           │
-                           │ webhook
-                           │
-                    ┌──────┴───────┐
-                    │GitHub Webhook│
-                    └──────────────┘
-```
-
-## 7. Authentication Component Interaction
-
-The authentication components interact as follows:
-
-```text
-Frontend
-   │
-   │ Auth Request
-   ▼
-Express Server
-   │
-   ▼
-Auth Routes
-   │
-   ▼
-Auth Controller
-   │
-   ▼
-Auth Service
-   │
-   ▼
-User Model
-   │
-   ▼
-MongoDB
-```
-
-Protected requests additionally pass through:
-
-```text
-AuthMiddleware
-```
-
-which verifies the JWT before allowing access to protected controllers.
-
-## 8. Code Review Component Interaction
-
-The normal code-review path is:
-
-```text
-React Frontend
-      │
-      ▼
-reviewService.js
-      │
-      ▼
-Express Backend
-      │
-      ▼
-reviewController.js
-      │
-      ▼
-reviewService.js
-      │
-      ▼
-groqProvider.js
-      │
-      ▼
-Groq AI
-      │
-      ▼
-Review Result
-      │
-      ├──────────────► Frontend through SSE
-      │
-      └──────────────► Review.js
-                              │
-                              ▼
-                           MongoDB
-```
-
-## 9. GitHub PR Review Component Interaction
-
-The automated pull-request review path is:
-
-```text
-GitHub
-   │
-   ▼
-GitHub Webhook
-   │
-   ▼
-webhookRoutes.js
-   │
-   ▼
-webhookController.js
-   │
-   ├──────────────► githubService.js
-   │                      │
-   │                      ▼
-   │                  GitHub API
-   │
-   └──────────────► prReviewService.js
-                          │
-                          ▼
-                    groqProvider.js
-                          │
-                          ▼
-                       Groq AI
-                          │
-                          ▼
-                    Review Result
-                          │
-                          ▼
-                    githubService.js
-                          │
-                          ▼
-                       GitHub
-```
-
-## 10. Component Responsibilities
+## 4. Component Responsibilities
 
 | Component | Responsibility |
 |---|---|
 | React/Vite Application | Frontend application entry and routing |
 | Pages | Application screens |
 | UI Components | Reusable user-interface elements |
-| `authService.js` | Frontend authentication API communication |
-| `reviewService.js` | Frontend review API communication and streamed response handling |
+| `authService.js` (frontend) | Frontend authentication API communication |
+| `reviewService.js` (frontend) | Frontend review API communication and streamed response handling |
 | Express Server | Backend HTTP server |
 | Routes | Define API endpoints |
 | Controllers | Handle HTTP requests and coordinate application logic |
 | `authMiddleware.js` | JWT authentication and authorization |
-| `authService.js` | Authentication business logic |
-| `reviewService.js` | Normal AI code-review processing |
-| `githubService.js` | GitHub API operations |
-| `prReviewService.js` | Pull-request review processing |
-| `ragService.js` | RAG-related service functionality |
-| `embeddingService.js` | Embedding-related functionality |
+| `authService.js` (backend) | Authentication business logic |
+| `reviewService.js` (backend) | Normal AI code-review processing |
+| `githubService.js` | GitHub API operations (fetch PR files, post reviews) |
+| `prReviewService.js` | Pull-request diff review processing |
+| `ragService.js` | Retrieves relevant repo context via embeddings for PR review |
+| `embeddingService.js` | Generates text embeddings used by `ragService.js` |
 | `groqProvider.js` | Groq AI API integration |
 | `User.js` | User MongoDB model |
 | `Review.js` | Review MongoDB model |
@@ -451,74 +211,12 @@ webhookController.js
 | Groq AI | Performs AI-powered code analysis |
 | MongoDB | Persists application data |
 
-## 11. Architectural Pattern
+## 5. Architectural Pattern
 
-The backend primarily follows a layered architecture:
-
-```text
-                 HTTP Request
-                      │
-                      ▼
-                   Routes
-                      │
-                      ▼
-                 Middleware
-                      │
-                      ▼
-                 Controllers
-                      │
-                      ▼
-                   Services
-                  /        \
-                 /          \
-                ▼            ▼
-           Providers       Models
-                │             │
-                ▼             ▼
-            Groq API       MongoDB
-```
-
-This separation keeps HTTP routing, authentication, business logic, external API communication, and database persistence organized into separate components.
-
-## 12. Summary
-
-The AI Code Review System consists of three major architectural areas:
+The backend follows a layered architecture — HTTP routing, authentication, business logic, external API communication, and database persistence are kept in separate components:
 
 ```text
-Frontend
-   │
-   ▼
-Backend
-   │
-   ├── Authentication
-   ├── Controllers
-   ├── Services
-   ├── AI Provider
-   ├── Database Models
-   └── Configuration
-   │
-   ├──────────────► Groq AI
-   ├──────────────► MongoDB
-   └──────────────► GitHub
+HTTP Request → Routes → Middleware → Controllers → Services → Providers / Models → Groq API / MongoDB
 ```
 
-The component architecture supports both major system workflows:
-
-1. **Normal AI Code Review**
-   - React frontend
-   - Express API
-   - Authentication middleware
-   - Review controller
-   - Review service
-   - Groq AI
-   - MongoDB
-
-2. **Automated GitHub Pull Request Review**
-   - GitHub webhook
-   - Webhook route/controller
-   - GitHub service
-   - PR review service
-   - Groq AI
-   - GitHub API
-
-The architecture keeps the frontend, backend layers, AI provider, database models, and external integrations separated into dedicated components.
+This structure supports both system workflows — normal AI code review (Frontend → Express → Auth Middleware → Review Controller → Review Service → Groq AI → MongoDB) and automated GitHub PR review (GitHub Webhook → Webhook Route/Controller → GitHub Service + PR Review Service → Groq AI → GitHub API) — through the same layered backend.
