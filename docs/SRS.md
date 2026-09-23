@@ -10,7 +10,7 @@
 
 ## 1.1 Purpose
 
-The AI Code Review System is a web application that allows an authenticated user to submit source code and receive an AI-generated review. The review is streamed to the browser and contains structured issues, suggestions, an overall score, and a summary.
+The AI Code Review System is a web application that allows an authenticated user to submit source code and receive an AI-generated review. The review is streamed to the browser and contains structured issues, an overall score, and a summary.
 
 The backend also contains a GitHub webhook workflow that analyzes pull request changes and can post review comments back to GitHub.
 
@@ -68,19 +68,19 @@ This document is intended for:
 
 ## 1.4 Definitions and Abbreviations
 
-| **TermDefinition** |                                                                                                                    |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| AI                 | Artificial Intelligence                                                                                            |
-| API                | Application Programming Interface                                                                                  |
-| JWT                | JSON Web Token                                                                                                     |
-| SSE                | Server-Sent Events                                                                                                 |
-| PR                 | Pull Request                                                                                                       |
-| HMAC               | Hash-based Message Authentication Code                                                                             |
-| UI                 | User Interface                                                                                                     |
-| REST               | Representational State Transfer                                                                                    |
-| LLM                | Large Language Model                                                                                               |
-| Mongoose           | MongoDB object modeling library used by the backend                                                                |
-| RAG                | Retrieval-Augmented Generation; represented by repository services named `ragService.js` and `embeddingService.js` |
+| Term | Definition |
+| ---- | ---- |
+| AI | Artificial Intelligence |
+| API | Application Programming Interface |
+| JWT | JSON Web Token |
+| SSE | Server-Sent Events |
+| PR | Pull Request |
+| HMAC | Hash-based Message Authentication Code |
+| UI | User Interface |
+| REST | Representational State Transfer |
+| LLM | Large Language Model |
+| Mongoose | MongoDB object modeling library used by the backend |
+| RAG | Retrieval-Augmented Generation; represented by repository services named `ragService.js` and `embeddingService.js` |
 
 ---
 
@@ -109,24 +109,18 @@ The backend:
 
 The backend is organized broadly as:
 
-Text
-
-```
+```text
 Routes
 → Controllers
 → Services
 → Providers / Models
-
 ```
 
 Relevant top-level directories:
 
-Text
-
-```
-client--/
+```text
+client/
 server/
-
 ```
 
 ## 2.2 Product Functions
@@ -135,11 +129,8 @@ server/
 
 Implemented through:
 
-Text
-
-```
+```text
 POST /v1/api/auth/register
-
 ```
 
 The request requires `name`, `email`, and `password`. The password is hashed using bcrypt before persistence.
@@ -148,12 +139,9 @@ The request requires `name`, `email`, and `password`. The password is hashed usi
 
 Implemented through:
 
-Text
-
-```
+```text
 POST /v1/api/auth/login
 POST /v1/api/auth/logout
-
 ```
 
 Login verifies the user’s password and issues a JWT in an HttpOnly cookie. Logout clears the cookie.
@@ -162,11 +150,8 @@ Login verifies the user’s password and issues a JWT in an HttpOnly cookie. Log
 
 Protected routes use:
 
-Text
-
-```
+```text
 server/src/middleware/authMiddleware.js
-
 ```
 
 The middleware reads `req.cookies.token`, verifies it with `JWT_SECRET`, and attaches the decoded user identifier to `req.user`.
@@ -175,21 +160,15 @@ The middleware reads `req.cookies.token`, verifies it with `JWT_SECRET`, and att
 
 Authenticated users submit:
 
-Text
-
-```
+```text
 code
 language
-
 ```
 
 to:
 
-Text
-
-```
+```text
 POST /v1/api/review
-
 ```
 
 Supported languages are:
@@ -204,11 +183,8 @@ Supported languages are:
 
 `reviewService.js` builds a review prompt and invokes:
 
-Text
-
-```
+```text
 server/src/providers/groqProvider.js
-
 ```
 
 The provider calls the Groq chat-completion API with streaming enabled.
@@ -219,22 +195,16 @@ The backend sets the response content type to `text/event-stream` and emits toke
 
 The frontend reads the response body and processes the SSE-style data events in:
 
-Text
-
-```
-client--/src/services/reviewService.js
-
+```text
+client/src/services/reviewService.js
 ```
 
 ### Review history
 
 Authenticated users can retrieve their own reviews through:
 
-Text
-
-```
+```text
 GET /v1/api/review
-
 ```
 
 The endpoint supports page and limit query parameters and excludes the stored `code` field from history results.
@@ -243,11 +213,8 @@ The endpoint supports page and limit query parameters and excludes the stored `c
 
 GitHub sends pull request webhooks to:
 
-Text
-
-```
+```text
 POST /webhook/github
-
 ```
 
 The handler processes `opened` and `synchronize` pull request actions, retrieves changed files and related repository files, analyzes the diff, and posts review comments when issues are found.
@@ -283,11 +250,8 @@ GitHub acts as an external system rather than a normal application user. It:
 
 Source:
 
-Text
-
-```
-client--
-
+```text
+client/
 ```
 
 Technology evidenced by the repository:
@@ -303,11 +267,8 @@ Technology evidenced by the repository:
 
 Source:
 
-Text
-
-```
+```text
 server
-
 ```
 
 Technology:
@@ -474,7 +435,7 @@ The exact GitHub webhook payload format is not defined by repository-specific sc
   3. `reviewController` validates `code` and `language`.
   4. `reviewService` receives the request.
 - **Expected result:** An SSE review stream is initiated.
-- **Implementation:** `client--/src/services/reviewService.js`, `server/src/routes/reviewRoutes.js`, `server/src/controllers/reviewController.js`.
+- **Implementation:** `client/src/services/reviewService.js`, `server/src/routes/reviewRoutes.js`, `server/src/controllers/reviewController.js`.
 - **Status:** Implemented.
 
 ## FR-10 — Generate an AI code review
@@ -500,7 +461,7 @@ The exact GitHub webhook payload format is not defined by repository-specific sc
   2. `reviewService` writes `data: {"token":"..."}` events.
   3. The frontend reads the stream and accumulates tokens.
 - **Expected result:** The user can see review output while processing is in progress.
-- **Implementation:** `server/src/services/reviewService.js`, `server/src/providers/groqProvider.js`, `client--/src/services/reviewService.js`.
+- **Implementation:** `server/src/services/reviewService.js`, `server/src/providers/groqProvider.js`, `client/src/services/reviewService.js`.
 - **Status:** Implemented.
 
 ## FR-12 — Validate structured AI output
@@ -511,7 +472,7 @@ The exact GitHub webhook payload format is not defined by repository-specific sc
 - **Main flow:**
   1. Extract JSON from the accumulated response.
   2. Repair or parse JSON.
-  3. Normalize string issue/suggestion formats when applicable.
+  3. Normalize string issue formats when applicable.
   4. Validate with `reviewResponseSchema`.
 - **Expected result:** Only a structurally valid review is persisted.
 - **Implementation:** `server/src/services/reviewService.js`, `server/src/utils/aiResponseParser.js`.
@@ -539,7 +500,7 @@ The exact GitHub webhook payload format is not defined by repository-specific sc
   4. Pagination is applied.
   5. The `code` field is excluded.
 - **Expected result:** HTTP 200 with reviews and pagination metadata.
-- **Implementation:** `server/src/controllers/reviewController.js`, `server/src/models/Review.js`, `client--/src/pages/HistoryPage.jsx`.
+- **Implementation:** `server/src/controllers/reviewController.js`, `server/src/models/Review.js`, `client/src/pages/HistoryPage.jsx`.
 - **Status:** Implemented.
 
 ## FR-15 — Receive GitHub pull request webhooks
@@ -686,31 +647,25 @@ The following requirements are limited to behavior evidenced by the code.
 
 Located in:
 
-Text
-
-```
-client--
-
+```text
+client/
 ```
 
 Important paths:
 
-- `client--/src/main.jsx`
-- `client--/src/App.jsx`
-- `client--/src/pages`
-- `client--/src/components`
-- `client--/src/services`
-- `client--/src/context`
+- `client/src/main.jsx`
+- `client/src/App.jsx`
+- `client/src/pages`
+- `client/src/components`
+- `client/src/services`
+- `client/src/context`
 
 ### Express backend
 
 Entry point:
 
-Text
-
-```
+```text
 server/server.js
-
 ```
 
 The server:
@@ -722,14 +677,11 @@ The server:
 
 ### Route → Controller → Service architecture
 
-Text
-
-```
+```text
 server/src/routes
 → server/src/controllers
 → server/src/services
 → server/src/providers / server/src/models
-
 ```
 
 ### MongoDB/Mongoose
@@ -753,13 +705,11 @@ server/src/routes
 
 ## 5.2 Architecture Diagram
 
-Mermaid
-
-```
+```mermaid
 flowchart LR
     User([User])
 
-    Frontend["React/Vite Frontend<br/>client--"]
+    Frontend["React/Vite Frontend<br/>client/"]
     Backend["Express Backend<br/>server/server.js"]
 
     Auth["Authentication / JWT<br/>HttpOnly cookie + authMiddleware"]
@@ -768,7 +718,6 @@ flowchart LR
     Groq["Groq AI API<br/>groqProvider.js"]
 
     GitHub["GitHub"]
-    Webhook["GitHub Webhook<br/>/webhook/github"]
 
     subgraph NormalFlow["Normal Code Review Flow"]
         User -->|"Enter code, select language"| Frontend
@@ -780,23 +729,23 @@ flowchart LR
         Groq -->|"Streaming AI tokens"| ReviewService
         ReviewService -->|"SSE review tokens/status"| Backend
         Backend -->|"SSE response"| Frontend
-        Frontend -->|"Display issues, suggestions,<br/>score and summary"| User
+        Frontend -->|"Display issues, score,<br/>and summary"| User
         ReviewService -->|"Persist validated review"| Mongo
     end
 
     subgraph GitHubFlow["GitHub Pull Request Automated Review Flow"]
-        GitHub -->|"pull_request opened/synchronize"| Webhook
-        Webhook -->|"POST /webhook/github"| Backend
-        Backend -->|"Verify x-hub-signature-256"| Webhook
-        Webhook -->|"Fetch changed files and context"| GitHub
-        Webhook -->|"PR diff review request"| ReviewService
+        GitHub -->|"pull_request opened/synchronize<br/>POST /webhook/github"| Backend
+        Backend -->|"Verify x-hub-signature-256<br/>(webhookController.js)"| Backend
+        Backend -->|"Fetch changed files and context"| GitHub
+        Backend -->|"PR diff review request"| ReviewService
         ReviewService -->|"Analyze PR changes"| Groq
         Groq -->|"AI review result"| ReviewService
-        ReviewService -->|"Review issues"| Webhook
-        Webhook -->|"Post PR review when issues exist"| GitHub
+        ReviewService -->|"Review issues"| Backend
+        Backend -->|"Post PR review when issues exist"| GitHub
     end
-
 ```
+
+> **Note:** The GitHub webhook endpoint (`POST /webhook/github`) is a route handled inside the Express backend (`webhookController.js`), not a separate deployed component. It is shown here as part of `Backend` — consistent with the detailed call sequence in Section 11.2, where `Backend` (not a standalone "Webhook" actor) orchestrates calls to `githubService.js` and `prReviewService.js`.
 
 ---
 
@@ -808,79 +757,65 @@ The backend uses MongoDB through Mongoose.
 
 Connection:
 
-Text
-
-```
+```text
 server/src/config/db.js
-
 ```
 
 The connection string is read from:
 
-Text
-
-```
+```text
 MONGO_URI
-
 ```
 
 ## 6.2 User Model
 
 Source:
 
-Text
-
-```
+```text
 server/src/models/User.js
-
 ```
 
-| **FieldTypeRequiredConstraints / Meaning** |                   |           |                              |
-| ------------------------------------------ | ----------------- | --------- | ---------------------------- |
-| `_id`                                      | Mongoose ObjectId | Generated | Mongoose document identifier |
-| `name`                                     | String            | Yes       | User name                    |
-| `email`                                    | String            | Yes       | Unique email                 |
-| `password`                                 | String            | Yes       | Stored password hash         |
-| `createdAt`                                | Date              | Generated | Enabled through timestamps   |
-| `updatedAt`                                | Date              | Generated | Enabled through timestamps   |
+| Field | Type | Required | Constraints / Meaning |
+| ---- | ---- | ---- | ---- |
+| `_id` | Mongoose ObjectId | Generated | Mongoose document identifier |
+| `name` | String | Yes | User name |
+| `email` | String | Yes | Unique email |
+| `password` | String | Yes | Stored password hash |
+| `createdAt` | Date | Generated | Enabled through timestamps |
+| `updatedAt` | Date | Generated | Enabled through timestamps |
 
 ## 6.3 Review Model
 
 Source:
 
-Text
-
-```
+```text
 server/src/models/Review.js
-
 ```
 
-| **FieldTypeRequiredConstraints / Meaning** |                   |                                |                              |
-| ------------------------------------------ | ----------------- | ------------------------------ | ---------------------------- |
-| `_id`                                      | Mongoose ObjectId | Generated                      | Mongoose document identifier |
-| `userId`                                   | ObjectId          | Yes                            | Reference to `User`          |
-| `code`                                     | String            | Yes                            | Submitted source code        |
-| `language`                                 | String            | Yes                            | Submitted language           |
-| `feedback.issues`                          | Array             | Not explicitly marked required | Review issues                |
-| `feedback.suggestions`                     | Array             | Not explicitly marked required | Review suggestions           |
-| `feedback.overall_score`                   | Number            | Not explicitly marked required | AI review score              |
-| `feedback.summary`                         | String            | Not explicitly marked required | AI review summary            |
-| `createdAt`                                | Date              | Generated                      | Enabled through timestamps   |
-| `updatedAt`                                | Date              | Generated                      | Enabled through timestamps   |
+| Field | Type | Required | Constraints / Meaning |
+| ---- | ---- | ---- | ---- |
+| `_id` | Mongoose ObjectId | Generated | Mongoose document identifier |
+| `userId` | ObjectId | Yes | Reference to `User` |
+| `code` | String | Yes | Submitted source code |
+| `language` | String | Yes | Submitted language |
+| `feedback.issues` | Array | Not explicitly marked required | Review issues; each item includes `line`, `severity`, `message`, and `fix` |
+| `feedback.overall_score` | Number | Not explicitly marked required | AI review score |
+| `feedback.summary` | String | Not explicitly marked required | AI review summary |
+| `createdAt` | Date | Generated | Enabled through timestamps |
+| `updatedAt` | Date | Generated | Enabled through timestamps |
+
+> **Note:** `feedback` previously included a separate `suggestions` array. That was consolidated so each issue carries its own `fix` field, and the standalone `suggestions` array was removed. Confirm this table matches the current `Review.js` schema before finalizing.
 
 ## 6.4 Relationship
 
 Each review contains a required reference to one user:
 
-JavaScript
-
-```
+```javascript
 userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true
 }
-
 ```
 
 Relationship:
@@ -898,9 +833,7 @@ Relationship:
 
 ## 6.6 ER Diagram
 
-Mermaid
-
-```
+```mermaid
 erDiagram
     USER ||--o{ REVIEW : creates
 
@@ -919,13 +852,11 @@ erDiagram
         string code
         string language
         array feedback_issues
-        array feedback_suggestions
         number feedback_overall_score
         string feedback_summary
         Date createdAt
         Date updatedAt
     }
-
 ```
 
 ---
@@ -936,62 +867,56 @@ erDiagram
 
 The route mounting is defined in:
 
-Text
-
-```
+```text
 server/server.js
-
 ```
 
-| **Route groupBase path** |                  |
-| ------------------------ | ---------------- |
-| Authentication           | `/v1/api/auth`   |
-| Reviews                  | `/v1/api/review` |
-| Users                    | `/v1/api/users`  |
-| GitHub Webhook           | `/webhook`       |
+| Route group | Base path |
+| ---- | ---- |
+| Authentication | `/v1/api/auth` |
+| Reviews | `/v1/api/review` |
+| Users | `/v1/api/users` |
+| GitHub Webhook | `/webhook` |
 
 ## 7.2 Authentication Endpoints
 
-| **MethodEndpointAuthResponse** |                         |         |                         |
-| ------------------------------ | ----------------------- | ------- | ----------------------- |
-| POST                           | `/v1/api/auth/register` | **No**  | JSON                    |
-| POST                           | `/v1/api/auth/login`    | **No**  | JSON and JWT cookie     |
-| GET                            | `/v1/api/auth/me`       | **Yes** | JSON                    |
-| POST                           | `/v1/api/auth/logout`   | **Yes** | JSON and cleared cookie |
+| Method | Endpoint | Auth | Response |
+| ---- | ---- | ---- | ---- |
+| POST | `/v1/api/auth/register` | **No** | JSON |
+| POST | `/v1/api/auth/login` | **No** | JSON and JWT cookie |
+| GET | `/v1/api/auth/me` | **Yes** | JSON |
+| POST | `/v1/api/auth/logout` | **Yes** | JSON and cleared cookie |
 
 ## 7.3 Review Endpoints
 
-| **MethodEndpointAuthResponse** |                  |         |                      |
-| ------------------------------ | ---------------- | ------- | -------------------- |
-| POST                           | `/v1/api/review` | **Yes** | SSE                  |
-| GET                            | `/v1/api/review` | **Yes** | JSON with pagination |
+| Method | Endpoint | Auth | Response |
+| ---- | ---- | ---- | ---- |
+| POST | `/v1/api/review` | **Yes** | SSE |
+| GET | `/v1/api/review` | **Yes** | JSON with pagination |
 
 ## 7.4 User Endpoint
 
-| **MethodEndpointAuthResponse** |                  |        |                           |
-| ------------------------------ | ---------------- | ------ | ------------------------- |
-| GET                            | `/v1/api/users/` | **No** | Plain text `"Alll Users"` |
+| Method | Endpoint | Auth | Response |
+| ---- | ---- | ---- | ---- |
+| GET | `/v1/api/users/` | **No** | Plain text `"Alll Users"` |
 
 This endpoint is implemented as a placeholder and does not return database users.
 
 ## 7.5 GitHub Webhook Endpoint
 
-| **MethodEndpointAuthentication mechanismResponse** |                   |                        |                 |
-| -------------------------------------------------- | ----------------- | ---------------------- | --------------- |
-| POST                                               | `/webhook/github` | HMAC SHA-256 signature | Plain text `OK` |
+| Method | Endpoint | Authentication mechanism | Response |
+| ---- | ---- | ---- | ---- |
+| POST | `/webhook/github` | HMAC SHA-256 signature | Plain text `OK` |
 
 The endpoint processes only pull request events with actions `opened` and `synchronize`.
 
 Detailed request fields, responses, validation, and errors are defined by:
 
-Text
-
-```
+```text
 server/src/routes
 server/src/controllers
 server/src/middleware
 server/src/services
-
 ```
 
 ---
@@ -1000,25 +925,19 @@ server/src/services
 
 ## 8.1 Browser and Frontend Interface
 
-The browser interacts with the React/Vite application in `client--`.
+The browser interacts with the React/Vite application in `client/`.
 
 Frontend services include:
 
-Text
-
-```
-client--/src/services/authService.js
-client--/src/services/reviewService.js
-
+```text
+client/src/services/authService.js
+client/src/services/reviewService.js
 ```
 
 The frontend sends credentials with authenticated requests:
 
-JavaScript
-
-```
+```javascript
 credentials: "include"
-
 ```
 
 The normal review endpoint returns a streaming response consumed using `ReadableStream.getReader()`.
@@ -1027,20 +946,14 @@ The normal review endpoint returns a streaming response consumed using `Readable
 
 Source:
 
-Text
-
-```
+```text
 server/src/providers/groqProvider.js
-
 ```
 
 The provider sends:
 
-Text
-
-```
+```text
 POST https://api.groq.com/openai/v1/chat/completions
-
 ```
 
 Request characteristics implemented in the repository:
@@ -1058,34 +971,25 @@ The provider reads SSE-like response lines and yields content tokens.
 
 Source:
 
-Text
-
-```
+```text
 server/src/config/db.js
-
 ```
 
 Mongoose connects using `MONGO_URI`.
 
 Models:
 
-Text
-
-```
+```text
 server/src/models/User.js
 server/src/models/Review.js
-
 ```
 
 ## 8.4 GitHub API Interface
 
 Source:
 
-Text
-
-```
+```text
 server/src/services/githubService.js
-
 ```
 
 The service uses GitHub API requests to:
@@ -1097,11 +1001,8 @@ The service uses GitHub API requests to:
 
 Authentication uses:
 
-Text
-
-```
+```text
 GITHUB_TOKEN
-
 ```
 
 with an API token header.
@@ -1110,11 +1011,8 @@ with an API token header.
 
 Source:
 
-Text
-
-```
+```text
 server/src/controllers/webhookController.js
-
 ```
 
 The webhook interface expects:
@@ -1134,22 +1032,16 @@ The server captures the raw body before normal JSON processing in `server/server
 
 The backend signs JWTs with:
 
-Text
-
-```
+```text
 JWT_SECRET
-
 ```
 
 The token contains:
 
-JavaScript
-
-```
+```javascript
 {
   userId: user._id
 }
-
 ```
 
 and expires after seven days.
@@ -1203,11 +1095,8 @@ It compares the result using `crypto.timingSafeEqual`.
 
 GitHub API requests use:
 
-Text
-
-```
+```text
 GITHUB_TOKEN
-
 ```
 
 The token is sent to GitHub API calls in `githubService.js`.
@@ -1249,9 +1138,7 @@ GitHub OAuth/login is not an implemented use case.
 
 ## 10.3 Use Case Diagram
 
-Mermaid
-
-```
+```mermaid
 flowchart LR
     User((User))
     GitHub((GitHub))
@@ -1283,7 +1170,6 @@ flowchart LR
     SubmitReview -. "<<include>>" .-> ViewResult
     ReceivePRReview -. "<<include>>" .-> AnalyzePR
     AnalyzePR -. "<<include>>" .-> PostComments
-
 ```
 
 ---
@@ -1292,9 +1178,7 @@ flowchart LR
 
 ## 11.1 Normal Code Review Sequence
 
-Mermaid
-
-```
+```mermaid
 sequenceDiagram
     actor User
     participant Frontend as React/Vite Frontend
@@ -1343,14 +1227,11 @@ sequenceDiagram
     Backend-->>Frontend: End SSE response
 
     Frontend-->>User: Display completed review
-
 ```
 
 ## 11.2 GitHub PR Automated Review Sequence
 
-Mermaid
-
-```
+```mermaid
 sequenceDiagram
     participant GitHub
     participant Webhook as GitHub Webhook Endpoint
@@ -1410,10 +1291,9 @@ sequenceDiagram
             Backend->>Backend: Do not start PR review
         end
     end
-
 ```
 
-> The webhook controller sends `200 OK` before asynchronous PR processing begins. The sequence after that response represents backend processing that continues independently.
+> The webhook controller sends `200 OK` before asynchronous PR processing begins. The sequence after that response represents backend processing that continues independently. Note that `Webhook` here represents the request-handling stage inside `webhookController.js`; the orchestration calls to `GithubService` and `PRService` are made by the same backend process (`Backend`), not by a separately running component — this sequence is the authoritative version referenced by Section 5.2's architecture diagram.
 
 ---
 
@@ -1423,26 +1303,24 @@ sequenceDiagram
 
 The README documents the following deployment arrangement:
 
-| **SystemDocumented deployment** |               |
-| ------------------------------- | ------------- |
-| Frontend                        | Vercel        |
-| Backend                         | Render        |
-| Database                        | MongoDB Atlas |
-| AI service                      | Groq API      |
-| Git hosting/webhooks            | GitHub        |
+| System | Documented deployment |
+| ---- | ---- |
+| Frontend | Vercel |
+| Backend | Render |
+| Database | MongoDB Atlas |
+| AI service | Groq API |
+| Git hosting/webhooks | GitHub |
 
 The repository does not contain enough deployment configuration to independently verify the Vercel or Render deployments. These locations are therefore marked **documented in README**.
 
 ## 12.2 Deployment Diagram
 
-Mermaid
-
-```
+```mermaid
 flowchart LR
     Browser["User's Browser<br/>Client runtime"]
 
     subgraph Vercel["Vercel<br/>(documented in README)"]
-        Frontend["React/Vite Frontend<br/>client--<br/>Client-side application"]
+        Frontend["React/Vite Frontend<br/>client/<br/>Client-side application"]
     end
 
     subgraph Render["Render<br/>(documented in README)"]
@@ -1472,7 +1350,6 @@ flowchart LR
     Backend -->|"Review comments/status"| GitHub
 
     Webhook -.->|"Runs as part of backend deployment"| Backend
-
 ```
 
 ## 12.3 Normal Deployment Flow
@@ -1500,39 +1377,30 @@ flowchart LR
 
 Handled by:
 
-Text
-
-```
+```text
 server/src/middleware/authMiddleware.js
-
 ```
 
 ### Missing cookie
 
 Returns HTTP 401:
 
-JSON
-
-```
+```json
 {
   "success": false,
   "message": "Acess denied. No token is provided."
 }
-
 ```
 
 ### Invalid or expired JWT
 
 Returns HTTP 401:
 
-JSON
-
-```
+```json
 {
   "success": false,
   "message": "Invalid or expired token."
 }
-
 ```
 
 ## 13.2 Invalid requests
@@ -1578,22 +1446,16 @@ The system can reject an AI response when:
 
 The stream emits:
 
-Text
-
-```
+```text
 data: {"status":"error","message":"AI response could not be validated. Please try again."}
-
 ```
 
 ## 13.5 Truncated AI responses
 
 If the accumulated response does not end with `}`, the service emits:
 
-Text
-
-```
+```text
 data: {"status":"error","message":"AI response was truncated. Please try again with shorter code."}
-
 ```
 
 ## 13.6 Database failures
@@ -1606,13 +1468,10 @@ data: {"status":"error","message":"AI response was truncated. Please try again w
 
 If the signature is missing or does not match, the webhook controller returns HTTP 401:
 
-JSON
-
-```
+```json
 {
   "error": "Invalid signature"
 }
-
 ```
 
 ## 13.8 GitHub API failures
@@ -1621,11 +1480,8 @@ JSON
 
 For asynchronous webhook processing, the controller logs:
 
-Text
-
-```
+```text
 Failed to review/post PR: <error message>
-
 ```
 
 Since `200 OK` is sent before background processing, the webhook sender does not receive a later processing failure response.
@@ -1644,11 +1500,8 @@ The repository integrates with GitHub APIs and webhooks but does not implement G
 
 `GET /v1/api/users/` does not query or return users. It returns:
 
-Text
-
-```
+```text
 Alll Users
-
 ```
 
 **Evidence:** `server/src/controllers/userController.js`.
@@ -1700,11 +1553,8 @@ All authenticated users use the same authorization model. No roles or permission
 
 The backend package defines:
 
-JSON
-
-```
+```json
 "test": "echo \"Error: no test specified\" && exit 1"
-
 ```
 
 ## 14.11 Deployment configuration is not contained in the inspected source
@@ -1769,61 +1619,61 @@ Clarify and integrate the roles of `ragService.js` and `embeddingService.js` if 
 
 # 16. Traceability
 
-| **Requirement IDRequirementImplementation/FileAPI/Component** |                                       |                                                                                                               |                              |
-| ------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| FR-01                                                         | Register a user                       | `server/src/controllers/authController.js`, `server/src/services/authService.js`, `server/src/models/User.js` | `POST /v1/api/auth/register` |
-| FR-02                                                         | Validate registration data            | `server/src/services/authService.js`                                                                          | Registration API             |
-| FR-03                                                         | Reject duplicate email                | `server/src/controllers/authController.js`                                                                    | Registration API             |
-| FR-04                                                         | Authenticate user and issue JWT       | `server/src/controllers/authController.js`                                                                    | `POST /v1/api/auth/login`    |
-| FR-05                                                         | Reject invalid credentials            | `server/src/controllers/authController.js`                                                                    | Login API                    |
-| FR-06                                                         | Return authenticated user context     | `server/src/middleware/authMiddleware.js`, `authController.js`                                                | `GET /v1/api/auth/me`        |
-| FR-07                                                         | Clear authentication cookie           | `server/src/controllers/authController.js`                                                                    | `POST /v1/api/auth/logout`   |
-| FR-08                                                         | Protect authenticated routes          | `server/src/middleware/authMiddleware.js`                                                                     | Review/auth protected routes |
-| FR-09                                                         | Submit code for review                | `client--/src/services/reviewService.js`, `server/src/controllers/reviewController.js`                        | `POST /v1/api/review`        |
-| FR-10                                                         | Generate AI review                    | `server/src/services/reviewService.js`, `server/src/providers/groqProvider.js`                                | Groq integration             |
-| FR-11                                                         | Stream review results                 | `server/src/services/reviewService.js`, `client--/src/services/reviewService.js`                              | Review SSE                   |
-| FR-12                                                         | Validate AI result                    | `server/src/services/reviewService.js`, `server/src/utils/aiResponseParser.js`                                | Review processing            |
-| FR-13                                                         | Persist completed review              | `server/src/services/reviewService.js`, `server/src/models/Review.js`                                         | MongoDB                      |
-| FR-14                                                         | Retrieve review history               | `server/src/controllers/reviewController.js`, `client--/src/pages/HistoryPage.jsx`                            | `GET /v1/api/review`         |
-| FR-15                                                         | Receive GitHub webhooks               | `server/server.js`, `server/src/routes/webhookRoutes.js`, `webhookController.js`                              | `POST /webhook/github`       |
-| FR-16                                                         | Process PR opened/synchronized events | `server/src/controllers/webhookController.js`                                                                 | GitHub webhook flow          |
-| FR-17                                                         | Analyze PR changes                    | `server/src/services/prReviewService.js`, `server/src/services/ragService.js`                                 | PR review flow               |
-| FR-18                                                         | Post GitHub review comments           | `server/src/services/githubService.js`                                                                        | GitHub API                   |
-| FR-19                                                         | Expose users route                    | `server/src/routes/userRoutes.js`, `server/src/controllers/userController.js`                                 | `GET /v1/api/users/`         |
-| NFR-01                                                        | Hash passwords                        | `server/src/controllers/authController.js`                                                                    | Authentication               |
-| NFR-02                                                        | Use HttpOnly JWT cookie               | `server/src/controllers/authController.js`                                                                    | Authentication               |
-| NFR-03                                                        | Reject invalid JWTs                   | `server/src/middleware/authMiddleware.js`                                                                     | Protected routes             |
-| NFR-04                                                        | Verify webhook HMAC                   | `server/src/controllers/webhookController.js`                                                                 | GitHub webhook               |
-| NFR-05                                                        | Validate AI structure                 | `server/src/services/reviewService.js`                                                                        | AI review                    |
-| NFR-06                                                        | Deliver incremental results           | `server/src/services/reviewService.js`, `groqProvider.js`                                                     | SSE review                   |
-| NFR-07                                                        | Support configured CORS credentials   | `server/server.js`                                                                                            | Frontend/backend interface   |
-| NFR-08                                                        | Separate architectural layers         | `server/src/routes`, `controllers`, `services`, `providers`, `models`                                         | Backend architecture         |
-| NFR-09                                                        | Paginate review history               | `server/src/controllers/reviewController.js`                                                                  | `GET /v1/api/review`         |
-| NFR-10                                                        | Abstract AI provider call             | `reviewService.js`, `groqProvider.js`                                                                         | AI integration               |
-| NFR-11                                                        | Validate environment configuration    | `server/src/config/envConfig.js`                                                                              | Backend startup              |
+| Requirement ID | Requirement | Implementation/File | API/Component |
+| ---- | ---- | ---- | ---- |
+| FR-01 | Register a user | `server/src/controllers/authController.js`, `server/src/services/authService.js`, `server/src/models/User.js` | `POST /v1/api/auth/register` |
+| FR-02 | Validate registration data | `server/src/services/authService.js` | Registration API |
+| FR-03 | Reject duplicate email | `server/src/controllers/authController.js` | Registration API |
+| FR-04 | Authenticate user and issue JWT | `server/src/controllers/authController.js` | `POST /v1/api/auth/login` |
+| FR-05 | Reject invalid credentials | `server/src/controllers/authController.js` | Login API |
+| FR-06 | Return authenticated user context | `server/src/middleware/authMiddleware.js`, `authController.js` | `GET /v1/api/auth/me` |
+| FR-07 | Clear authentication cookie | `server/src/controllers/authController.js` | `POST /v1/api/auth/logout` |
+| FR-08 | Protect authenticated routes | `server/src/middleware/authMiddleware.js` | Review/auth protected routes |
+| FR-09 | Submit code for review | `client/src/services/reviewService.js`, `server/src/controllers/reviewController.js` | `POST /v1/api/review` |
+| FR-10 | Generate AI review | `server/src/services/reviewService.js`, `server/src/providers/groqProvider.js` | Groq integration |
+| FR-11 | Stream review results | `server/src/services/reviewService.js`, `client/src/services/reviewService.js` | Review SSE |
+| FR-12 | Validate AI result | `server/src/services/reviewService.js`, `server/src/utils/aiResponseParser.js` | Review processing |
+| FR-13 | Persist completed review | `server/src/services/reviewService.js`, `server/src/models/Review.js` | MongoDB |
+| FR-14 | Retrieve review history | `server/src/controllers/reviewController.js`, `client/src/pages/HistoryPage.jsx` | `GET /v1/api/review` |
+| FR-15 | Receive GitHub webhooks | `server/server.js`, `server/src/routes/webhookRoutes.js`, `webhookController.js` | `POST /webhook/github` |
+| FR-16 | Process PR opened/synchronized events | `server/src/controllers/webhookController.js` | GitHub webhook flow |
+| FR-17 | Analyze PR changes | `server/src/services/prReviewService.js`, `server/src/services/ragService.js` | PR review flow |
+| FR-18 | Post GitHub review comments | `server/src/services/githubService.js` | GitHub API |
+| FR-19 | Expose users route | `server/src/routes/userRoutes.js`, `server/src/controllers/userController.js` | `GET /v1/api/users/` |
+| NFR-01 | Hash passwords | `server/src/controllers/authController.js` | Authentication |
+| NFR-02 | Use HttpOnly JWT cookie | `server/src/controllers/authController.js` | Authentication |
+| NFR-03 | Reject invalid JWTs | `server/src/middleware/authMiddleware.js` | Protected routes |
+| NFR-04 | Verify webhook HMAC | `server/src/controllers/webhookController.js` | GitHub webhook |
+| NFR-05 | Validate AI structure | `server/src/services/reviewService.js` | AI review |
+| NFR-06 | Deliver incremental results | `server/src/services/reviewService.js`, `groqProvider.js` | SSE review |
+| NFR-07 | Support configured CORS credentials | `server/server.js` | Frontend/backend interface |
+| NFR-08 | Separate architectural layers | `server/src/routes`, `controllers`, `services`, `providers`, `models` | Backend architecture |
+| NFR-09 | Paginate review history | `server/src/controllers/reviewController.js` | `GET /v1/api/review` |
+| NFR-10 | Abstract AI provider call | `reviewService.js`, `groqProvider.js` | AI integration |
+| NFR-11 | Validate environment configuration | `server/src/config/envConfig.js` | Backend startup |
 
 ---
 
 ## Implementation Status Summary
 
-| **AreaStatus**                      |                                                                                          |
-| ----------------------------------- | ---------------------------------------------------------------------------------------- |
-| React/Vite frontend                 | Implemented                                                                              |
-| Registration                        | Implemented                                                                              |
-| Login and logout                    | Implemented                                                                              |
-| JWT cookie authentication           | Implemented                                                                              |
-| Protected review submission         | Implemented                                                                              |
-| Groq streaming review               | Implemented                                                                              |
-| Structured AI response validation   | Implemented                                                                              |
-| MongoDB user/review persistence     | Implemented                                                                              |
-| Review history pagination           | Implemented                                                                              |
-| GitHub webhook signature validation | Implemented                                                                              |
-| GitHub PR file retrieval            | Implemented                                                                              |
-| Automated PR review generation      | Implemented                                                                              |
-| GitHub review comment posting       | Implemented                                                                              |
-| User listing                        | Partially implemented; placeholder response only                                         |
-| Guest review mode                   | Frontend/README indication exists, but unauthenticated backend review is not implemented |
-| GitHub OAuth                        | Not implemented                                                                          |
-| Role-based authorization            | Not implemented                                                                          |
-| Automated test suite                | Not implemented                                                                          |
-| Vercel/Render deployment            | Documented in README, not independently confirmed by source deployment configuration     |
+| Area | Status |
+| ---- | ---- |
+| React/Vite frontend | Implemented |
+| Registration | Implemented |
+| Login and logout | Implemented |
+| JWT cookie authentication | Implemented |
+| Protected review submission | Implemented |
+| Groq streaming review | Implemented |
+| Structured AI response validation | Implemented |
+| MongoDB user/review persistence | Implemented |
+| Review history pagination | Implemented |
+| GitHub webhook signature validation | Implemented |
+| GitHub PR file retrieval | Implemented |
+| Automated PR review generation | Implemented |
+| GitHub review comment posting | Implemented |
+| User listing | Partially implemented; placeholder response only |
+| Guest review mode | Frontend/README indication exists, but unauthenticated backend review is not implemented |
+| GitHub OAuth | Not implemented |
+| Role-based authorization | Not implemented |
+| Automated test suite | Not implemented |
+| Vercel/Render deployment | Documented in README, not independently confirmed by source deployment configuration |
