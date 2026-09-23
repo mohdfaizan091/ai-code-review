@@ -2,23 +2,27 @@
 
 ## 1. Overview
 
-The AI Code Review System provides functionality for authenticated users to submit source code for AI-powered review, view review results, and access review history.
+The AI Code Review System allows users to submit source code for AI-powered review, view review results, and access review history.
 
-The system also integrates with GitHub to automatically analyze pull requests and post review comments when issues are identified.
+It also integrates with GitHub to automatically analyze pull requests and post review comments when issues are found.
 
-The two primary actors are:
+### Actors
 
-- **User**
-- **GitHub**
+* **User** — interacts with the application through the frontend.
+* **GitHub** — sends pull-request webhooks and receives automated review comments.
+
+---
 
 ## 2. Use Case Diagram
 
 ```mermaid
 flowchart LR
+
     User((User))
     GitHub((GitHub))
 
     subgraph System["AI Code Review System"]
+
         Register(["Register"])
         Login(["Login"])
         Logout(["Logout"])
@@ -26,9 +30,10 @@ flowchart LR
         ViewResult(["View review result"])
         ViewHistory(["View review history"])
 
-        ReceivePRReview(["Receive automated GitHub PR review"])
-        AnalyzePR(["Analyze pull request changes"])
-        PostComments(["Post review comments to GitHub"])
+        ReceivePRReview(["Receive GitHub PR webhook"])
+        AnalyzePR(["Analyze pull request"])
+        PostComments(["Post review to GitHub"])
+
     end
 
     User --- Register
@@ -39,7 +44,6 @@ flowchart LR
     User --- ViewHistory
 
     GitHub --- ReceivePRReview
-    GitHub --- AnalyzePR
     GitHub --- PostComments
 
     SubmitReview -. "<<include>>" .-> ViewResult
@@ -47,287 +51,143 @@ flowchart LR
     AnalyzePR -. "<<include>>" .-> PostComments
 ```
 
+---
+
 ## 3. Actors
 
 ### User
 
-The **User** interacts with the React/Vite frontend in `client--`.
+The user interacts with the React/Vite frontend and can:
 
-The user can:
-
-- Register an account.
-- Log in.
-- Log out.
-- Submit source code for AI review.
-- View the resulting review.
-- View previous review history.
+* Register an account
+* Log in
+* Log out
+* Submit source code for AI review
+* View review results
+* View review history
 
 ### GitHub
 
-**GitHub** interacts with the backend through the GitHub webhook integration.
+GitHub interacts with the backend through the webhook integration and can:
 
-GitHub can:
+* Send pull-request events
+* Trigger automated PR analysis
+* Receive review comments
 
-- Send pull-request webhook events.
-- Trigger automated pull-request analysis.
-- Receive review comments posted back to a pull request.
+GitHub OAuth/login is not implemented.
 
-GitHub authentication or OAuth is not included because the repository does not implement GitHub OAuth/login.
+---
 
 ## 4. Use Cases
 
 ### Register
 
-The registration functionality is implemented through:
+**Endpoint:** `POST /v1/api/auth/register`
 
-`POST /v1/api/auth/register`
+Creates a new user account and stores the user information in MongoDB.
 
-Backend logic:
+**Implementation:** `server/src/controllers/authController.js`
 
-`server/src/controllers/authController.js`
-
-The registration process creates a user account and stores the user information in MongoDB.
+---
 
 ### Login
 
-The login functionality is implemented through:
+**Endpoint:** `POST /v1/api/auth/login`
 
-`POST /v1/api/auth/login`
+Authenticates the user and creates a JWT stored in an HttpOnly cookie.
 
-The authentication process:
+**Implementation:** `server/src/controllers/authController.js`
 
-1. Receives the user's credentials.
-2. Validates the credentials.
-3. Creates a JWT.
-4. Stores the JWT in an HttpOnly cookie.
-
-The JWT is subsequently used for authenticated requests.
+---
 
 ### Logout
 
-The logout functionality is implemented through:
+**Endpoint:** `POST /v1/api/auth/logout`
 
-`POST /v1/api/auth/logout`
+Clears the JWT authentication cookie.
 
-The endpoint clears the JWT authentication cookie.
+**Implementation:** `server/src/controllers/authController.js`
+
+---
 
 ### Submit Code for AI Review
 
-The user can submit source code for AI-powered analysis.
+**Endpoint:** `POST /v1/api/review`
 
-The functionality is implemented through:
+The authenticated user submits source code for AI analysis. The backend processes the request and streams the generated review to the frontend.
 
-`POST /v1/api/review`
+**Implementation:**
 
-Frontend service:
+* `client--/src/services/reviewService.js`
+* `server/src/controllers/reviewController.js`
+* `server/src/services/reviewService.js`
 
-`client--/src/services/reviewService.js`
-
-Backend route and controller:
-
-`server/src/routes/reviewRoutes.js`
-
-`server/src/controllers/reviewController.js`
-
-The review request is authenticated before the backend processes it.
-
-The backend sends the code to the AI review service and streams the generated review back to the frontend.
+---
 
 ### View Review Result
 
-After submitting code, the user receives the AI-generated review result.
+The frontend displays the AI-generated review after code submission.
 
-The frontend receives the streamed response and displays the findings.
+Results can contain:
 
-Relevant frontend files include:
+* Issues
+* Suggestions
+* Overall score
+* Summary
 
-`client--/src/components/ReviewPanel.jsx`
+**Implementation:** `client--/src/components/ReviewPanel.jsx`
 
-`client--/src/services/reviewService.js`
-
-The review result can contain:
-
-- Issues
-- Suggestions
-- Overall score
-- Summary
+---
 
 ### View Review History
 
-Authenticated users can view their previous code reviews.
+**Endpoint:** `GET /v1/api/review`
 
-The functionality is implemented through:
+Authenticated users can retrieve their previous reviews. Results are associated with the authenticated user and support pagination.
 
-`GET /v1/api/review`
+**Implementation:** `client--/src/pages/HistoryPage.jsx`
 
-Frontend page:
+---
 
-`client--/src/pages/HistoryPage.jsx`
+### Receive GitHub PR Webhook
 
-The backend retrieves persisted reviews associated with the authenticated user.
+**Endpoint:** `POST /webhook/github`
 
-The endpoint supports pagination and returns the user's review history.
+GitHub sends pull-request events to trigger automated review processing.
 
-### Receive Automated GitHub PR Review
+Supported actions:
 
-GitHub can trigger an automated code review through a pull-request webhook.
+* `opened`
+* `synchronize`
 
-The webhook endpoint is:
+The webhook request is verified using the GitHub webhook signature.
 
-`POST /webhook/github`
+**Implementation:** `server/src/controllers/webhookController.js`
 
-The webhook route is defined in:
+---
 
-`server/src/routes/webhookRoutes.js`
+### Analyze Pull Request
 
-The webhook handler is:
+The system retrieves changed files and relevant repository content, then analyzes the pull request using the AI review system.
 
-`server/src/controllers/webhookController.js`
+**Implementation:**
 
-Supported pull-request events include:
+* `server/src/services/githubService.js`
+* `server/src/services/prReviewService.js`
 
-- `opened`
-- `synchronize`
+---
 
-The webhook request is verified using the GitHub webhook signature before processing.
+### Post Review to GitHub
 
-### Analyze Pull Request Changes
+When issues are identified, the system posts a review back to the corresponding GitHub pull request.
 
-When a GitHub pull-request event is received, the system retrieves the relevant pull-request information.
+**Implementation:** `server/src/services/githubService.js`
 
-GitHub integration is handled by:
+---
 
-`server/src/services/githubService.js`
+## 5. Main Workflows
 
-The service retrieves changed files and related repository content.
-
-PR-specific analysis is performed by:
-
-`server/src/services/prReviewService.js`
-
-The retrieved pull-request changes are then analyzed using the AI review system.
-
-### Post Review Comments to GitHub
-
-After analyzing the pull request, the system can post review comments back to GitHub.
-
-The GitHub integration is handled by:
-
-`server/src/services/githubService.js`
-
-The webhook controller initiates the review process, and the resulting issues can be posted back to the corresponding GitHub pull request.
-
-The current implementation posts a review when analyzed files contain issues.
-
-## 5. Use Case Relationships
-
-The main relationships between use cases are:
-
-```text
-Submit Code for AI Review
-          │
-          │ <<include>>
-          ▼
-    View Review Result
-```
-
-The GitHub workflow is:
-
-```text
-Receive Automated GitHub PR Review
-              │
-              │ <<include>>
-              ▼
-    Analyze Pull Request Changes
-              │
-              │ <<include>>
-              ▼
-      Post Review Comments
-```
-
-This represents the automated pull-request review flow.
-
-## 6. User Interaction Flow
-
-The normal user workflow can be summarized as:
-
-```text
-User
- │
- ├── Register
- │
- ├── Login
- │
- ├── Submit Code for AI Review
- │          │
- │          ▼
- │     View Review Result
- │
- ├── View Review History
- │
- └── Logout
-```
-
-## 7. GitHub Interaction Flow
-
-The automated GitHub workflow can be summarized as:
-
-```text
-GitHub
-  │
-  ▼
-Pull Request Event
-  │
-  ▼
-Receive Automated PR Review
-  │
-  ▼
-Analyze Pull Request Changes
-  │
-  ▼
-AI Review
-  │
-  ▼
-Post Review Comments
-  │
-  ▼
-GitHub Pull Request
-```
-
-## 8. Use Case Summary
-
-| Actor | Use Case | Implementation |
-|---|---|---|
-| User | Register | `POST /v1/api/auth/register` |
-| User | Login | `POST /v1/api/auth/login` |
-| User | Logout | `POST /v1/api/auth/logout` |
-| User | Submit code for AI review | `POST /v1/api/review` |
-| User | View review result | Frontend streamed review |
-| User | View review history | `GET /v1/api/review` |
-| GitHub | Receive automated PR review | `POST /webhook/github` |
-| GitHub | Analyze pull request changes | `githubService.js` + `prReviewService.js` |
-| GitHub | Receive review comments | `githubService.js` |
-
-## 9. Scope and Limitations
-
-The use cases represented in this diagram are based on functionality implemented in the repository.
-
-The following are not represented as implemented use cases:
-
-- GitHub OAuth/login.
-- GitHub account authentication.
-- Role-based administration.
-- Password reset.
-- Email verification.
-- Dedicated admin functionality.
-
-These features are not implemented in the current repository.
-
-## 10. Summary
-
-The AI Code Review System has two main interaction paths.
-
-### User-driven review
+### User Workflow
 
 ```text
 User
@@ -336,14 +196,16 @@ Register / Login
   ↓
 Submit Code
   ↓
-AI Analysis
+AI Review
   ↓
-View Review Result
+View Result
   ↓
 Review History
+  ↓
+Logout
 ```
 
-### GitHub-driven review
+### GitHub Workflow
 
 ```text
 GitHub
@@ -354,7 +216,38 @@ Analyze Changes
   ↓
 AI Review
   ↓
-Post Review Comments
+Post Review
+  ↓
+GitHub Pull Request
 ```
 
-The use case model therefore represents both the interactive code-review functionality provided to users and the automated pull-request review functionality integrated with GitHub.
+---
+
+## 6. Use Case Summary
+
+| Actor  | Use Case                  | Implementation                            |
+| ------ | ------------------------- | ----------------------------------------- |
+| User   | Register                  | `POST /v1/api/auth/register`              |
+| User   | Login                     | `POST /v1/api/auth/login`                 |
+| User   | Logout                    | `POST /v1/api/auth/logout`                |
+| User   | Submit code for AI review | `POST /v1/api/review`                     |
+| User   | View review result        | Frontend streamed review                  |
+| User   | View review history       | `GET /v1/api/review`                      |
+| GitHub | Receive PR webhook        | `POST /webhook/github`                    |
+| GitHub | Analyze pull request      | `githubService.js` + `prReviewService.js` |
+| GitHub | Receive review            | `githubService.js`                        |
+
+---
+
+## 7. Scope and Limitations
+
+The current implementation does **not** include:
+
+* GitHub OAuth/login
+* GitHub account authentication
+* Role-based administration
+* Password reset
+* Email verification
+* Dedicated admin functionality
+
+These features are outside the current implemented use cases.

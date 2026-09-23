@@ -2,20 +2,18 @@
 
 ## 1. Overview
 
-The sequence diagram describes the complete flow of a normal AI code-review request.
+The sequence diagram describes the flow of an AI code-review request, from code submission through authentication, AI processing, SSE streaming, validation, database persistence, and completion.
 
-The flow begins when a user submits source code through the React/Vite frontend and ends when the completed review is displayed to the user after being validated and stored in MongoDB.
+### Main Components
 
-The main components involved are:
-
-- User
-- React/Vite Frontend
-- Express Backend
-- Authentication Middleware
-- Review Controller
-- Review Service
-- Groq AI
-- MongoDB
+* User
+* React/Vite Frontend
+* Express Backend
+* Authentication Middleware
+* Review Controller
+* Review Service
+* Groq AI
+* MongoDB
 
 ## 2. Sequence Diagram
 
@@ -31,7 +29,6 @@ sequenceDiagram
     participant MongoDB
 
     User->>Frontend: Enter code, select language, submit review
-
     Frontend->>Backend: POST /v1/api/review<br/>{ code, language }<br/>credentials: include
 
     Backend->>Auth: Execute authMiddleware
@@ -42,10 +39,9 @@ sequenceDiagram
     Backend->>Controller: Handle review request
     Controller->>Controller: Validate code and language with Zod
     Controller-->>Frontend: Initialize text/event-stream response
-
     Controller->>ReviewService: streamReview(code, language, userId, response)
-    ReviewService->>ReviewService: Build code-review prompt
 
+    ReviewService->>ReviewService: Build code-review prompt
     ReviewService->>Groq: POST chat completion request<br/>stream: true
     Groq-->>ReviewService: Stream AI response tokens
 
@@ -66,44 +62,33 @@ sequenceDiagram
     Backend-->>Frontend: data: {"status": "success"}
     ReviewService-->>Backend: Write data: [DONE]
     Backend-->>Frontend: End SSE response
-
     Frontend-->>User: Display completed review
 ```
 
-## 3. Sequence Explanation
+## 3. Sequence Flow
 
-### Step 1 — User Submits Code
+### Step 1 — Submit Review
 
-The user enters source code, selects a supported programming language, and submits the review request through the React/Vite frontend.
+The user enters source code, selects a programming language, and submits the review through the React/Vite frontend.
 
-The frontend collects:
+The frontend sends:
+
+```text
+POST /v1/api/review
+```
+
+with:
 
 ```text
 code
 language
 ```
 
-and starts the review process.
+The request includes credentials so the JWT stored in the HttpOnly cookie is sent to the backend.
 
-### Step 2 — Frontend Sends Review Request
+### Step 2 — Authentication
 
-The frontend service:
-
-```text
-client--/src/services/reviewService.js
-```
-
-sends:
-
-```text
-POST /v1/api/review
-```
-
-The request includes credentials so that the JWT stored in the HttpOnly cookie is sent with the request.
-
-### Step 3 — Authentication Middleware
-
-The Express backend routes the request through:
+The request passes through:
 
 ```text
 server/src/middleware/authMiddleware.js
@@ -112,26 +97,12 @@ server/src/middleware/authMiddleware.js
 The middleware:
 
 1. Reads the JWT from `req.cookies.token`.
-2. Verifies the JWT using `JWT_SECRET`.
+2. Verifies it using `JWT_SECRET`.
 3. Extracts the authenticated user's ID.
-4. Attaches the user ID to `req.user`.
+4. Attaches the ID to `req.user`.
 5. Allows the request to continue.
 
-Conceptually:
-
-```text
-Request
-   ↓
-JWT Cookie
-   ↓
-authMiddleware
-   ↓
-JWT Verification
-   ↓
-Authenticated userId
-```
-
-### Step 4 — Review Controller
+### Step 3 — Review Controller
 
 The request is handled by:
 
@@ -139,25 +110,11 @@ The request is handled by:
 server/src/controllers/reviewController.js
 ```
 
-The controller validates the request body using Zod.
+The controller:
 
-The supported languages are:
-
-- JavaScript
-- TypeScript
-- Python
-- Java
-- C++
-
-The controller then initializes an SSE response using:
-
-```text
-text/event-stream
-```
-
-### Step 5 — Start Review Service
-
-The controller calls:
+* Validates `code` and `language` using Zod.
+* Initializes the SSE response using `text/event-stream`.
+* Calls:
 
 ```text
 streamReview(code, language, userId, response)
@@ -169,42 +126,35 @@ from:
 server/src/services/reviewService.js
 ```
 
-The review service is responsible for the main AI-review processing.
+Supported languages:
 
-### Step 6 — Build AI Prompt
+* JavaScript
+* TypeScript
+* Python
+* Java
+* C++
 
-The `reviewService.js` module builds the code-review prompt using the submitted:
+### Step 4 — AI Review Processing
 
-```text
-code
-language
-```
+The review service builds the code-review prompt using the submitted code and language.
 
-The prepared request is then passed to the AI provider.
-
-### Step 7 — Send Request to Groq
-
-The review service communicates with:
+It communicates with:
 
 ```text
 server/src/providers/groqProvider.js
 ```
 
-The provider sends a chat-completion request to the Groq AI service.
-
-The request uses streaming:
+The Groq request uses:
 
 ```text
 stream: true
 ```
 
-This allows the AI response to be received incrementally rather than waiting for the complete response.
+allowing the AI response to be received incrementally.
 
-### Step 8 — Stream AI Response
+### Step 5 — SSE Streaming
 
-Groq returns response tokens progressively.
-
-The review service forwards these tokens through Server-Sent Events.
+As Groq returns tokens, the review service forwards them through Server-Sent Events.
 
 The frontend receives events such as:
 
@@ -212,47 +162,21 @@ The frontend receives events such as:
 data: {"token": "..."}
 ```
 
-The frontend continuously appends the received tokens to the accumulated review.
+and progressively displays the generated review.
 
-### Step 9 — Display Streaming Review
+### Step 6 — Validate AI Response
 
-While the AI response is being generated, the frontend progressively displays the review content to the user.
+After streaming completes, `reviewService.js`:
 
-Conceptually:
-
-```text
-Groq
-  ↓
-AI Token
-  ↓
-reviewService
-  ↓
-SSE
-  ↓
-Frontend
-  ↓
-Review UI
-```
-
-This provides a streaming review experience.
-
-### Step 10 — Parse AI Response
-
-After the AI streaming process completes, `reviewService.js` processes the accumulated response.
-
-The service:
-
-1. Extracts the structured response.
+1. Parses the accumulated AI response.
 2. Normalizes the response.
-3. Validates the resulting structure using Zod.
+3. Validates the structured result using Zod.
 
-This ensures that the generated review follows the expected structure before it is stored.
+Only a successfully validated result proceeds to persistence.
 
-### Step 11 — Save Review to MongoDB
+### Step 7 — Save Review
 
-After successful validation, the review service creates a `Review` document.
-
-The stored information includes:
+The review service creates a `Review` document containing:
 
 ```text
 userId
@@ -261,185 +185,48 @@ language
 feedback
 ```
 
-The database model is:
+The corresponding model is:
 
 ```text
 server/src/models/Review.js
 ```
 
-The review is stored in MongoDB.
+The document is stored in MongoDB.
 
-Conceptually:
+### Step 8 — Completion
 
-```text
-ReviewService
-     │
-     ▼
-Review Model
-     │
-     ▼
-MongoDB
-```
-
-### Step 12 — Send Completion Events
-
-After the review has been successfully stored, the backend sends a success SSE event:
+After the review is successfully stored, the backend sends:
 
 ```text
 data: {"status": "success"}
 ```
 
-The service then sends:
+followed by:
 
 ```text
 data: [DONE]
 ```
 
-The SSE response is subsequently closed.
+The SSE connection is then closed, and the frontend completes the review display.
 
-### Step 13 — Display Completed Review
+## 4. Components and Responsibilities
 
-The frontend receives the completion event and finishes processing the review.
+| Component             | Responsibility                                                  |
+| --------------------- | --------------------------------------------------------------- |
+| User                  | Submits source code and views the review                        |
+| React/Vite Frontend   | Sends review requests and displays streamed results             |
+| Express Backend       | Receives and routes API requests                                |
+| `authMiddleware.js`   | Verifies JWT authentication                                     |
+| `reviewController.js` | Validates the request and starts the review                     |
+| `reviewService.js`    | Builds the prompt, processes the AI response, and saves reviews |
+| `groqProvider.js`     | Communicates with Groq AI                                       |
+| MongoDB               | Stores users and completed reviews                              |
 
-The completed review is displayed to the user.
+## 5. Validation and Error Points
 
-The overall flow is:
+### Authentication
 
-```text
-User
- ↓
-React/Vite Frontend
- ↓
-POST /v1/api/review
- ↓
-authMiddleware
- ↓
-reviewController
- ↓
-reviewService
- ↓
-Groq AI
- ↓
-SSE Streaming
- ↓
-Frontend
- ↓
-Validate AI Response
- ↓
-MongoDB
- ↓
-Completion Event
- ↓
-User
-```
-
-## 4. Components Involved
-
-| Component | Responsibility |
-|---|---|
-| User | Submits source code and views the review |
-| React/Vite Frontend | Sends requests and displays streamed results |
-| `reviewService.js` | Handles frontend review API communication |
-| Express Backend | Receives and routes API requests |
-| `authMiddleware.js` | Verifies JWT authentication |
-| `reviewController.js` | Validates request and starts the review |
-| `reviewService.js` | Builds prompt, processes AI response, and saves review |
-| `groqProvider.js` | Communicates with Groq AI |
-| MongoDB | Stores users and completed reviews |
-
-## 5. Authentication Sequence
-
-The authentication part of the request can be summarized as:
-
-```text
-Frontend
-   │
-   │ Request + JWT Cookie
-   ▼
-Express Backend
-   │
-   ▼
-authMiddleware
-   │
-   ├── Read token
-   │
-   ├── Verify JWT
-   │
-   └── Extract userId
-   │
-   ▼
-reviewController
-```
-
-The authenticated `userId` is then passed to the review service so that the resulting review can be associated with the correct user.
-
-## 6. AI Streaming Sequence
-
-The AI streaming process is:
-
-```text
-reviewService
-      │
-      │ stream: true
-      ▼
-   Groq AI
-      │
-      │ tokens
-      ▼
-reviewService
-      │
-      │ SSE events
-      ▼
-Frontend
-      │
-      ▼
-Review UI
-```
-
-This allows the user to see the AI-generated review while it is being produced.
-
-## 7. Database Sequence
-
-The persistence part of the flow occurs after the AI response has been processed:
-
-```text
-Groq AI
-   ↓
-Complete AI Response
-   ↓
-Parse
-   ↓
-Normalize
-   ↓
-Validate with Zod
-   ↓
-Review Model
-   ↓
-MongoDB
-```
-
-The saved review contains:
-
-```text
-userId
-code
-language
-feedback
-```
-
-## 8. Error and Validation Points
-
-The sequence contains several validation stages.
-
-### Authentication Validation
-
-The JWT must be present and valid.
-
-```text
-Invalid / Missing JWT
-        ↓
-Authentication Failure
-```
+A missing or invalid JWT results in authentication failure.
 
 ### Request Validation
 
@@ -454,40 +241,6 @@ using Zod.
 
 ### AI Response Validation
 
-After the AI response is received, the review service normalizes and validates the structured result using Zod before storing it.
+The review service normalizes and validates the structured AI response using Zod before saving it to MongoDB.
 
-This prevents an invalid AI response from being directly persisted as a completed review.
-
-## 9. Summary
-
-The normal AI code-review sequence follows a layered request flow:
-
-```text
-User
-  ↓
-React/Vite Frontend
-  ↓
-Express Backend
-  ↓
-Authentication Middleware
-  ↓
-Review Controller
-  ↓
-Review Service
-  ↓
-Groq AI
-  ↓
-Streaming SSE Response
-  ↓
-Frontend
-  ↓
-Validate Structured Review
-  ↓
-MongoDB
-  ↓
-Completion Event
-  ↓
-User
-```
-
-The sequence demonstrates how authentication, request validation, AI streaming, structured-response validation, database persistence, and frontend result rendering work together to complete an AI code review.
+This prevents an invalid AI response from being persisted as a completed review.
