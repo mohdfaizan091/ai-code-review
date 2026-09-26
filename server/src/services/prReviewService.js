@@ -55,6 +55,10 @@ export async function reviewPRDiff(files, relatedFiles = []) {
   for await (const token of streamCompletion(prompt)) {
     fullResponse += token;
   }
+  
+  console.log("PROMPT LENGTH:", prompt.length);
+  console.log("RAW GROQ RESPONSE:", JSON.stringify(fullResponse));
+
 
   const parsed = extractAndParseJSON(fullResponse);
   const validated = prReviewSchema.parse(parsed);
